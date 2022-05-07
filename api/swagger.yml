@@ -1,0 +1,32 @@
+swagger: "2.0"
+info:
+  title: A personal diary API
+  version: 1.0.0
+consumes:
+- application/io.goswagger.examples.todo-list.v1+json
+produces:
+- application/io.goswagger.examples.todo-list.v1+json
+schemes:
+- http
+tags:
+  - name: diaries
+  - name: diary-entries
+  - name: users
+  - name: sharing-tasks
+  - name: other
+paths:
+  /ping:
+    get:
+      tags:
+        - other
+      responses:
+        200:
+          description: OK
+  /users/register:
+    post:
+      tags:
+        - users
+      responses:
+        200:
+          description:
+definitions:

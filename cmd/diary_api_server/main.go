@@ -2,7 +2,7 @@ package main
 
 import (
 	"diary-api/internal/config"
-	"diary-api/internal/protocol/http"
+	"diary-api/internal/protocol/rest_api"
 	"github.com/joho/godotenv"
 	"log"
 )
@@ -13,8 +13,8 @@ func main() {
 	}
 
 	cfg := config.Read()
-	server := http.NewServer(cfg)
+	server := rest_api.NewServer(cfg)
 	if err := server.Run(); err != nil {
-		log.Fatalf("Unable to start http server: %v", err)
+		log.Fatalf("Unable to start REST API server: %v", err)
 	}
 }

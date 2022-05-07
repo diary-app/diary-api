@@ -1,4 +1,4 @@
-package http
+package rest_api
 
 import (
 	"diary-api/internal/config"
@@ -24,9 +24,9 @@ func (s server) Run() error {
 }
 
 func NewServer(cfg *config.Config) Server {
-	router := SetupRouter()
-	return &server{
-		router: router,
-		cfg:    cfg,
+	s := &server{
+		cfg: cfg,
 	}
+	s.registerRoutes()
+	return s
 }
