@@ -4,7 +4,7 @@ import (
 	"diary-api/internal/config"
 	"diary-api/internal/protocol/rest_api"
 	"github.com/joho/godotenv"
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -12,9 +12,13 @@ func main() {
 		log.Printf(".env file not loaded: %v", err)
 	}
 
-	cfg := config.Read()
+	cfg, err := config.Read()
+	if err != nil {
+		log.Fatalf("cannot start server: %v", err)
+	}
+
 	server := rest_api.NewServer(cfg)
 	if err := server.Run(); err != nil {
-		log.Fatalf("Unable to start REST API server: %v", err)
+		log.Fatalf("failed to start REST API server: %v", err)
 	}
 }

@@ -1,10 +1,12 @@
-package diaries_handler
+package users_handler
 
 import "github.com/gin-gonic/gin"
 
 type Handler interface {
-	GetMyDiaries() gin.HandlerFunc
-	GetDiaryEntries() gin.HandlerFunc
+	Register() gin.HandlerFunc
+	Login() gin.HandlerFunc
+	GetMe() gin.HandlerFunc
+	GetUser() gin.HandlerFunc
 }
 
 func New() Handler {

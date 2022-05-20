@@ -1,0 +1,9 @@
+appPort: 8888
+swagger:
+  validate: true
+  specPath: ./api/swagger.yml
+postgres:
+  host: "localhost"
+  port: 6432
+  dbName: "diaries"
+  user: "postgres"

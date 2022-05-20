@@ -2,19 +2,31 @@ package config
 
 import (
 	"fmt"
-	"github.com/caarlos0/env/v6"
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Port string `env:"APP_PORT,required"`
+	AppPort string   `yaml:"appPort"`
+	PG      DbConfig `yaml:"postgres"`
 }
 
-func Read() *Config {
+type DbConfig struct {
+	Host     string `yaml:"host"`
+	DbName   string `yaml:"dbName"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `env-required:"true" yaml:"password" env:"DB_PASSWORD"`
+}
+
+func Read() (*Config, error) {
 	cfg := &Config{}
-	if err := env.Parse(cfg); err != nil {
-		panic(fmt.Sprintf("Failed to read config: %v", err))
+	if err := cleanenv.ReadConfig("./internal/config/config.yml", cfg); err != nil {
+		return nil, fmt.Errorf("read config from yaml failed: %w", err)
 	}
 
-	return cfg
+	if err := cleanenv.ReadEnv(cfg); err != nil {
+		return nil, fmt.Errorf("read config from env - error: %w", err)
+	}
 
+	return cfg, nil
 }

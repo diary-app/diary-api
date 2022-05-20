@@ -1,6 +1,9 @@
 package diary_entries_handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"diary-api/internal/usecase"
+	"github.com/gin-gonic/gin"
+)
 
 type Handler interface {
 	GetList() gin.HandlerFunc
@@ -11,9 +14,12 @@ type Handler interface {
 	Patch() gin.HandlerFunc
 }
 
-func New() Handler {
-	return &handler{}
+func New(uc usecase.DiaryEntriesUseCase) Handler {
+	return &handler{
+		uc: uc,
+	}
 }
 
 type handler struct {
+	uc usecase.DiaryEntriesUseCase
 }

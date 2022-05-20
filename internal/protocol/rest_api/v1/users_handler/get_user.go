@@ -1,8 +1,8 @@
-package diary_entries_handler
+package users_handler
 
 import "github.com/gin-gonic/gin"
 
-func (h *handler) Create() gin.HandlerFunc {
+func (h *handler) GetUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		//TODO implement me
 		panic("implement me")

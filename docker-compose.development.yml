@@ -1,0 +1,32 @@
+services:
+  diary-metadata:
+    image: postgres
+    ports:
+      - 6432:5432
+    container_name: diary-metadata
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: postgres
+      POSTGRES_DB: diaries
+    volumes:
+      - diary-metadata-vol:/var/lib/postgresql/data
+  diary-contents:
+    image: minio/minio
+    container_name: diary-contents
+    ports:
+      - 9000:9000
+      - 9011:9001
+    volumes:
+      - diary-contents-vol:/data
+    environment:
+      MINIO_ACCESS_KEY: minioaccesskey
+      MINIO_SECRET_KEY: miniosecretkey
+    command: ["minio", "server", "/data", "--console-address", ":9001"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+volumes:
+  diary-metadata-vol:
+  diary-contents-vol:
