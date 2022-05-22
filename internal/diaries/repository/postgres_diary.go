@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"diary-api/internal/db"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type postgresDiaryRepository struct {
@@ -46,6 +48,11 @@ func (p *postgresDiaryRepository) CreateDiary(ctx context.Context, diary *usecas
 	if err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			return nil, multierror.Append(err, rbErr)
+		}
+
+		pqErr, ok := err.(*pq.Error)
+		if ok && pqErr.Code == db.UniqueViolationErrorCode {
+			return nil, usecase.ErrDuplicateDiaryName
 		}
 		return nil, err
 	}

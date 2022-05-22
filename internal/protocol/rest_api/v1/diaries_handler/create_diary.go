@@ -4,6 +4,7 @@ import (
 	"diary-api/internal/auth"
 	"diary-api/internal/protocol/rest_api/rest_utils"
 	"diary-api/internal/usecase"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,7 +20,12 @@ func (h *handler) CreateDiary() gin.HandlerFunc {
 		userId := auth.MustGetUserId(c)
 		diary, err := h.uc.CreateDiary(c.Request.Context(), userId, request)
 		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			if err == usecase.ErrDuplicateDiaryName {
+				c.JSON(http.StatusConflict,
+					gin.H{"message": fmt.Sprintf("you already have diary with name '%v'", request.Name)})
+			} else {
+				_ = c.AbortWithError(http.StatusInternalServerError, err)
+			}
 			return
 		}
 

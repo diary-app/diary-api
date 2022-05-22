@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -32,3 +33,9 @@ type DiaryRepository interface {
 	CreateDiary(ctx context.Context, diary *Diary) (*Diary, error)
 	GetDiariesByUser(ctx context.Context, userId uuid.UUID) ([]Diary, error)
 }
+
+// Errors
+
+var (
+	ErrDuplicateDiaryName = errors.New("user already has diary with this name")
+)
