@@ -1,10 +1,20 @@
 package sharing_tasks_handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"diary-api/internal/auth"
+	"diary-api/internal/usecase"
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
 
-func (h *handler) GetAllMine() gin.HandlerFunc {
+func (h *handler) GetSharingTasks() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//TODO implement me
-		panic("implement me")
+		userId := auth.MustGetUserId(c)
+		tasks, err := h.uc.GetSharingTasks(c.Request.Context(), userId)
+		if err != nil {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		c.JSON(http.StatusOK, usecase.SharingTasksListResponse{Items: tasks})
 	}
 }

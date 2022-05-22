@@ -50,7 +50,8 @@ CREATE TABLE sharing_tasks
     diary_id uuid REFERENCES diaries (id) NOT NULL,
     receiver_user_id uuid REFERENCES users (id) NOT NULL,
     encrypted_diary_key bytea NOT NULL,
-    shared_at timestamp NOT NULL
+    shared_at timestamp NOT NULL,
+    PRIMARY KEY (diary_id, receiver_user_id)
 );
 
 CREATE VIEW diaries_with_entries AS

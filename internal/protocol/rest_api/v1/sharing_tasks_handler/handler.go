@@ -1,16 +1,22 @@
 package sharing_tasks_handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"diary-api/internal/usecase"
+	"github.com/gin-gonic/gin"
+)
 
 type Handler interface {
 	Create() gin.HandlerFunc
-	GetAllMine() gin.HandlerFunc
+	GetSharingTasks() gin.HandlerFunc
 	DeleteById() gin.HandlerFunc
 }
 
-func New() Handler {
-	return &handler{}
+func New(uc usecase.SharingTasksUseCase) Handler {
+	return &handler{
+		uc: uc,
+	}
 }
 
 type handler struct {
+	uc usecase.SharingTasksUseCase
 }

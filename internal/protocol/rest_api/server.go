@@ -10,6 +10,8 @@ import (
 	diaryEntriesRepository "diary-api/internal/diary_entries/repository"
 	"diary-api/internal/protocol/rest_api/middleware"
 	v1 "diary-api/internal/protocol/rest_api/v1"
+	"diary-api/internal/sharing_tasks"
+	sharingTasksRepository "diary-api/internal/sharing_tasks/repository"
 	"diary-api/internal/usecase"
 	"diary-api/internal/users"
 	usersRepository "diary-api/internal/users/repository"
@@ -48,6 +50,7 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 	diaryUc := getDiaryUc(dbConn)
 	diaryEntriesUc := getDiaryEntriesUc(dbConn)
 	usersUc := getUsersUc(dbConn, authService)
+	sharingTasksUc := getSharingTasksUc(dbConn)
 
 	errorHandlerMw := middleware.ErrorHandler(l)
 	s := &server{
@@ -56,9 +59,13 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 	}
 
 	jwtMw := middleware.JwtMiddleware(authService)
-	apiGroup := s.r.Group("/api")
-	v1.RegisterRoutes(apiGroup, diaryUc, diaryEntriesUc, usersUc, jwtMw)
+	v1.RegisterRoutes(s.r.Group(""), jwtMw, diaryUc, diaryEntriesUc, usersUc, sharingTasksUc)
 	return s
+}
+
+func getSharingTasksUc(conn *sqlx.DB) usecase.SharingTasksUseCase {
+	stRepo := sharingTasksRepository.New(conn)
+	return sharing_tasks.NewUseCase(stRepo)
 }
 
 func initRouter(errorHandler gin.HandlerFunc) *gin.Engine {

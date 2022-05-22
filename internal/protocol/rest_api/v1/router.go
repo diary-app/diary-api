@@ -11,9 +11,8 @@ import (
 	"net/http"
 )
 
-func RegisterRoutes(r *gin.RouterGroup, diaryUc usecase.DiaryUseCase, diaryEntriesUc usecase.DiaryEntriesUseCase,
-	usersUc usecase.UsersUseCase, jwtMw gin.HandlerFunc) {
-	rg := r.Group("/v1")
+func RegisterRoutes(r *gin.RouterGroup, jwtMw gin.HandlerFunc, diaryUc usecase.DiaryUseCase, diaryEntriesUc usecase.DiaryEntriesUseCase, usersUc usecase.UsersUseCase, sharingTasksUc usecase.SharingTasksUseCase) {
+	rg := r.Group("/api/v1")
 
 	rg.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
@@ -25,7 +24,7 @@ func RegisterRoutes(r *gin.RouterGroup, diaryUc usecase.DiaryUseCase, diaryEntri
 	registerUsersRoutes(authRg, usersUc)
 	registerDiariesRoutes(authRg, diaryUc)
 	registerDiaryEntriesRoutes(authRg, diaryEntriesUc)
-	registerSharingTasksRoutes(authRg)
+	registerSharingTasksRoutes(authRg, sharingTasksUc)
 }
 
 func registerAuthRoutes(rg *gin.RouterGroup, uc usecase.UsersUseCase) {
@@ -43,12 +42,12 @@ func registerUsersRoutes(rg *gin.RouterGroup, uc usecase.UsersUseCase) {
 	users.GET("/name=:name", usersH.GetUserByName())
 }
 
-func registerSharingTasksRoutes(rg *gin.RouterGroup) {
-	sharingTasksH := sharing_tasks_handler.New()
+func registerSharingTasksRoutes(rg *gin.RouterGroup, uc usecase.SharingTasksUseCase) {
+	sharingTasksH := sharing_tasks_handler.New(uc)
 	sharingTasks := rg.Group("/sharing-tasks")
-	sharingTasks.GET("", sharingTasksH.GetAllMine())
+	sharingTasks.GET("", sharingTasksH.GetSharingTasks())
 	sharingTasks.POST("", sharingTasksH.Create())
-	sharingTasks.DELETE("/:id", sharingTasksH.DeleteById())
+	sharingTasks.DELETE("/diaryId=:diaryId", sharingTasksH.DeleteById())
 }
 
 func registerDiaryEntriesRoutes(rg *gin.RouterGroup, diaryEntriesUc usecase.DiaryEntriesUseCase) {

@@ -77,10 +77,10 @@ func (p *postgresDiaryRepository) CreateDiary(ctx context.Context, diary *usecas
 }
 
 func (p *postgresDiaryRepository) GetDiariesByUser(ctx context.Context, userId uuid.UUID) ([]usecase.Diary, error) {
-	query := `
-SELECT d.id, d.name, d.owner_id, k.encrypted_key 
-FROM diary_keys k 
-    JOIN diaries d ON d.id = k.diary_id 
+	const query = `
+SELECT d.id, d.name, d.owner_id, k.encrypted_key
+FROM diary_keys k
+    JOIN diaries d ON d.id = k.diary_id
 WHERE k.user_id = $1
 `
 	var diariesWithKeys []diaryWithKey
@@ -114,7 +114,7 @@ func insertDiary(ctx context.Context, diary *usecase.Diary, tx *sqlx.Tx) (*useca
 		OwnerId: diary.OwnerId,
 		Name:    diary.Name,
 	}
-	diaryQuery := `INSERT INTO diaries (name, owner_id) VALUES (:name, :owner_id) RETURNING id`
+	const diaryQuery = `INSERT INTO diaries(name, owner_id) VALUES(:name,:owner_id) RETURNING id`
 	query, args, err := tx.BindNamed(diaryQuery, newD)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func insertDiary(ctx context.Context, diary *usecase.Diary, tx *sqlx.Tx) (*useca
 }
 
 func insertDiaryKeys(ctx context.Context, keys []usecase.DiaryKey, tx *sqlx.Tx) error {
-	diaryKeysQuery := `
+	const diaryKeysQuery = `
 INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES (:diary_id, :user_id, :encrypted_key)`
 	newDiaryKeys := make([]newDiaryKey, len(keys))
 	for i, key := range keys {
