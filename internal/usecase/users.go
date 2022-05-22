@@ -8,12 +8,12 @@ import (
 )
 
 type FullUser struct {
-	Id                            uuid.UUID `db:"id"`
-	Username                      string    `db:"username"`
-	PasswordHash                  []byte    `db:"password_hash"`
-	SaltForKeys                   []byte    `db:"salt_for_keys"`
-	PublicKeyForSharing           string    `db:"public_key_for_sharing"`
-	EncryptedPrivateKeyForSharing string    `db:"encrypted_private_key_for_sharing"`
+	Id                            uuid.UUID `db:"id" json:"id"`
+	Username                      string    `db:"username" json:"username"`
+	PasswordHash                  []byte    `db:"password_hash" json:"-"`
+	SaltForKeys                   []byte    `db:"salt_for_keys" json:"saltForKeys"`
+	PublicKeyForSharing           string    `db:"public_key_for_sharing" json:"publicKeyForSharing"`
+	EncryptedPrivateKeyForSharing string    `db:"encrypted_private_key_for_sharing" json:"encryptedPrivateKeyForSharing"`
 }
 
 func (u *FullUser) String() string {
@@ -44,14 +44,14 @@ type RegistrationResult struct {
 }
 
 type AuthResult struct {
-	Success bool   `json:"success"`
-	Token   string `json:"token"`
+	Token string `json:"token"`
 }
 
 type UsersUseCase interface {
 	Register(ctx context.Context, request *RegisterRequest) (*RegistrationResult, error)
 	Login(ctx context.Context, request *LoginRequest) (*AuthResult, error)
 	GetFullUser(ctx context.Context, userId uuid.UUID) (*FullUser, error)
+	GetUserById(ctx context.Context, userId uuid.UUID) (*ShortUser, error)
 	GetUserByName(ctx context.Context, username string) (*ShortUser, error)
 }
 
@@ -64,13 +64,13 @@ type UsersRepository interface {
 // Errors
 
 var (
-	UserNotFoundError = errors.New("user with given name was not found")
+	ErrUserNotFound = errors.New("user with given name was not found")
 )
 
-type UsernameTakenError struct {
+type ErrUsernameTaken struct {
 	Username string
 }
 
-func (u UsernameTakenError) Error() string {
+func (u ErrUsernameTaken) Error() string {
 	return fmt.Sprintf("username '%v' is already taken", u.Username)
 }

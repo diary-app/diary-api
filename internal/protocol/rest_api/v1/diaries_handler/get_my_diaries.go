@@ -1,10 +1,9 @@
 package diaries_handler
 
 import (
+	"diary-api/internal/auth"
 	"diary-api/internal/usecase"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 )
 
@@ -14,20 +13,12 @@ type DiariesResponse struct {
 
 func (h *handler) GetMyDiaries() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var userId uuid.UUID
-		// TODO userId from jwt
-		userId = uuid.MustParse("de0a2016-6df3-437f-88cb-bec859f3c53f")
+		userId := auth.MustGetUserId(c)
 		diaries, err := h.uc.GetDiariesByUser(c.Request.Context(), userId)
 		if err != nil {
-			// TODO log
-			_ = c.Error(fmt.Errorf("GetMyDiaries - DiaryUseCase - GetDiariesByUser: %v", err))
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-
-		response := DiariesResponse{
-			Items: diaries,
-		}
-
-		c.JSON(http.StatusOK, response)
+		c.JSON(http.StatusOK, DiariesResponse{Items: diaries})
 	}
 }

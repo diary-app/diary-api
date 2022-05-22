@@ -31,7 +31,7 @@ func NewUseCase(t auth.TokenService, r usecase.UsersRepository) usecase.UsersUse
 func (u *usersUseCase) Register(ctx context.Context, req *usecase.RegisterRequest) (*usecase.RegistrationResult, error) {
 	existingUser, err := u.usersRepo.GetUserByName(ctx, req.Username)
 	if existingUser != nil {
-		return nil, usecase.UsernameTakenError{Username: existingUser.Username}
+		return nil, usecase.ErrUsernameTaken{Username: existingUser.Username}
 	}
 
 	saltBytes := make([]byte, SaltForKeysSize)
@@ -69,7 +69,7 @@ func (u *usersUseCase) Login(ctx context.Context, request *usecase.LoginRequest)
 	user, err := u.usersRepo.GetUserByName(ctx, request.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, usecase.UserNotFoundError
+			return nil, usecase.ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -95,6 +95,19 @@ func (u *usersUseCase) GetFullUser(ctx context.Context, userId uuid.UUID) (*usec
 	}
 
 	return user, nil
+}
+
+func (u *usersUseCase) GetUserById(ctx context.Context, userId uuid.UUID) (*usecase.ShortUser, error) {
+	user, err := u.GetFullUser(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	shortUser := &usecase.ShortUser{
+		Id:                  user.Id,
+		Username:            user.Username,
+		PublicKeyForSharing: user.PublicKeyForSharing,
+	}
+	return shortUser, nil
 }
 
 func (u *usersUseCase) GetUserByName(ctx context.Context, username string) (*usecase.ShortUser, error) {

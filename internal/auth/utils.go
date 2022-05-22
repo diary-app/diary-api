@@ -5,10 +5,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func MustGetUserId(ctx *gin.Context) uuid.UUID {
-	val, ok := ctx.Get(UserIdKey)
+func MustGetUserId(c *gin.Context) uuid.UUID {
+	val, ok := c.Get(UserIdKey)
 	if !ok {
-		panic(UserIdNotFoundError)
+		panic(ErrUserIdNotFoundInCtx)
 	}
 
 	id := val.(uuid.UUID)

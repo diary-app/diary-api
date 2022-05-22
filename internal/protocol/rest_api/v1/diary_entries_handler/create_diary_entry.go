@@ -10,8 +10,8 @@ import (
 func (h *handler) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &usecase.CreateDiaryEntryRequest{}
-		if err := c.BindJSON(request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("invalid request body: %v", err)})
+		if err := c.ShouldBindJSON(request); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("invalid request body: %v", err)})
 			return
 		}
 

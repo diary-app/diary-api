@@ -6,10 +6,9 @@ import (
 )
 
 type Handler interface {
-	Register() gin.HandlerFunc
-	Login() gin.HandlerFunc
 	GetMe() gin.HandlerFunc
-	GetUser() gin.HandlerFunc
+	GetUserById() gin.HandlerFunc
+	GetUserByName() gin.HandlerFunc
 }
 
 func New(uc usecase.UsersUseCase) Handler {

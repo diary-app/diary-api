@@ -6,21 +6,21 @@ import (
 )
 
 type Diary struct {
-	Id      uuid.UUID  `json:"id,omitempty"`
-	Name    string     `json:"name,omitempty"`
-	OwnerId uuid.UUID  `json:"ownerId,omitempty"`
-	Keys    []DiaryKey `json:"keys,omitempty"`
+	Id      uuid.UUID  `json:"id"`
+	Name    string     `json:"name"`
+	OwnerId uuid.UUID  `json:"ownerId"`
+	Keys    []DiaryKey `json:"keys"`
 }
 
 type DiaryKey struct {
-	DiaryId      uuid.UUID `json:"diaryId,omitempty"`
-	UserId       uuid.UUID `json:"userId,omitempty"`
-	EncryptedKey string    `json:"encryptedKey,omitempty"`
+	DiaryId      uuid.UUID `json:"diaryId"`
+	UserId       uuid.UUID `json:"userId"`
+	EncryptedKey string    `json:"encryptedKey"`
 }
 
 type CreateDiaryRequest struct {
-	Name         string
-	EncryptedKey string
+	Name         string `json:"name" binding:"required"`
+	EncryptedKey string `json:"encryptedKey" binding:"required"`
 }
 
 type DiaryUseCase interface {

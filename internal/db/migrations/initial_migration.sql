@@ -19,6 +19,8 @@ CREATE TABLE diaries
     owner_id uuid REFERENCES users (id) NOT NULL
 );
 
+CREATE UNIQUE INDEX ON diaries (name, owner_id);
+
 CREATE TABLE diary_keys
 (
     diary_id uuid REFERENCES diaries (id) NOT NULL,

@@ -1,6 +1,7 @@
-package users_handler
+package auth_handler
 
 import (
+	"diary-api/internal/protocol/rest_api/rest_utils"
 	"diary-api/internal/usecase"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -9,16 +10,15 @@ import (
 func (h *handler) Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &usecase.RegisterRequest{}
-		if err := c.BindJSON(request); err != nil {
-			_ = c.Error(err)
-			c.JSON(http.StatusBadRequest, gin.H{"message": "request body was invalid"})
+		if err := c.ShouldBindJSON(request); err != nil {
+			rest_utils.RespondInvalidBodyJSON(c)
 			return
 		}
 
 		authResult, err := h.uc.Register(c.Request.Context(), request)
 		if err != nil {
 			_ = c.Error(err)
-			usernameTakenError, ok := err.(usecase.UsernameTakenError)
+			usernameTakenError, ok := err.(usecase.ErrUsernameTaken)
 			if ok {
 				c.JSON(http.StatusConflict, gin.H{"message": usernameTakenError.Error()})
 			}

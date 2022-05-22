@@ -62,7 +62,7 @@ func (t *tokensManager) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	if !token.Valid {
-		return nil, TokenInvalidError
+		return nil, ErrTokenInvalid
 	}
 
 	return claims, nil
@@ -76,7 +76,7 @@ func (t *tokensManager) RefreshToken(tokenString string) (string, error) {
 	}
 
 	if !token.Valid {
-		return "", TokenInvalidError
+		return "", ErrTokenInvalid
 	}
 
 	untilExpire := time.Unix(claims.ExpiresAt, 0).Sub(t.clock.Now())

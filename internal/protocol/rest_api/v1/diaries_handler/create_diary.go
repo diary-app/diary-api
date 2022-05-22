@@ -2,6 +2,7 @@ package diaries_handler
 
 import (
 	"diary-api/internal/auth"
+	"diary-api/internal/protocol/rest_api/rest_utils"
 	"diary-api/internal/usecase"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -10,9 +11,8 @@ import (
 func (h *handler) CreateDiary() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &usecase.CreateDiaryRequest{}
-		if err := c.BindJSON(request); err != nil {
-			_ = c.Error(err)
-			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
+		if err := c.ShouldBindJSON(request); err != nil {
+			rest_utils.RespondInvalidBodyJSON(c)
 			return
 		}
 

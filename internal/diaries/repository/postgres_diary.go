@@ -74,7 +74,7 @@ func (p *postgresDiaryRepository) GetDiariesByUser(ctx context.Context, userId u
 SELECT d.id, d.name, d.owner_id, k.encrypted_key 
 FROM diary_keys k 
     JOIN diaries d ON d.id = k.diary_id 
-WHERE user_id = $1
+WHERE k.user_id = $1
 `
 	var diariesWithKeys []diaryWithKey
 	if err := p.db.SelectContext(ctx, &diariesWithKeys, query, userId); err != nil {
