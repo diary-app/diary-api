@@ -1,6 +1,9 @@
 package users_handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"diary-api/internal/usecase"
+	"github.com/gin-gonic/gin"
+)
 
 type Handler interface {
 	Register() gin.HandlerFunc
@@ -9,9 +12,12 @@ type Handler interface {
 	GetUser() gin.HandlerFunc
 }
 
-func New() Handler {
-	return &handler{}
+func New(uc usecase.UsersUseCase) Handler {
+	return &handler{
+		uc: uc,
+	}
 }
 
 type handler struct {
+	uc usecase.UsersUseCase
 }

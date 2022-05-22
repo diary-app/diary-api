@@ -6,8 +6,13 @@ import (
 )
 
 type Config struct {
-	AppPort string   `yaml:"appPort"`
-	PG      DbConfig `yaml:"postgres"`
+	AppPort string     `yaml:"appPort"`
+	PG      DbConfig   `yaml:"postgres"`
+	Auth    AuthConfig `yaml:"auth"`
+}
+
+type AuthConfig struct {
+	JwtKey string `env-required:"true" yaml:"jwtKey" env:"JWT_KEY"`
 }
 
 type DbConfig struct {

@@ -8,15 +8,16 @@ import (
 
 type Handler interface {
 	GetMyDiaries() gin.HandlerFunc
+	CreateDiary() gin.HandlerFunc
 }
 
 func New(usecase usecase.DiaryUseCase) Handler {
 	return &handler{
-		usecase: usecase,
+		uc: usecase,
 	}
 }
 
 type handler struct {
-	usecase usecase.DiaryUseCase
-	l       log.Logger
+	uc usecase.DiaryUseCase
+	l  log.Logger
 }

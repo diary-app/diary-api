@@ -2,6 +2,8 @@ appPort: 8888
 swagger:
   validate: true
   specPath: ./api/swagger.yml
+auth:
+  jwtKey: "12345"
 postgres:
   host: "localhost"
   port: 6432

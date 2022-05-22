@@ -8,17 +8,18 @@ import (
 )
 
 func main() {
+	logger := log.New()
 	if err := godotenv.Load(".env"); err != nil {
-		log.Printf(".env file not loaded: %v", err)
+		logger.Printf(".env file not loaded: %v", err)
 	}
 
 	cfg, err := config.Read()
 	if err != nil {
-		log.Fatalf("cannot start server: %v", err)
+		logger.Fatalf("cannot start server: %v", err)
 	}
 
-	server := rest_api.NewServer(cfg)
+	server := rest_api.NewServer(cfg, logger)
 	if err := server.Run(); err != nil {
-		log.Fatalf("failed to start REST API server: %v", err)
+		logger.Fatalf("failed to start REST API server: %v", err)
 	}
 }

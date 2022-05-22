@@ -8,19 +8,19 @@ import (
 )
 
 func (h *handler) Create() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		request := &usecase.CreateDiaryEntryRequest{}
-		if err := ctx.BindJSON(request); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("invalid request body: %v", err)})
+		if err := c.BindJSON(request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("invalid request body: %v", err)})
 			return
 		}
 
-		entry, err := h.uc.Create(ctx.Request.Context(), *request)
+		entry, err := h.uc.Create(c.Request.Context(), *request)
 		if err != nil {
-			_ = ctx.Error(err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entry)
+		c.JSON(http.StatusOK, entry)
 	}
 }

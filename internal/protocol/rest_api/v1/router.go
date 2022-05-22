@@ -10,49 +10,59 @@ import (
 	"net/http"
 )
 
-func RegisterRoutes(r *gin.RouterGroup, diaryUc usecase.DiaryUseCase, diaryEntriesUc usecase.DiaryEntriesUseCase) {
+func RegisterRoutes(r *gin.RouterGroup, diaryUc usecase.DiaryUseCase, diaryEntriesUc usecase.DiaryEntriesUseCase,
+	usersUc usecase.UsersUseCase, jwtMw gin.HandlerFunc) {
 	rg := r.Group("/v1")
 
 	rg.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
 
-	registerDiariesRoutes(rg, diaryUc)
-	registerDiaryEntriesRoutes(rg, diaryEntriesUc)
-	registerUsersRoutes(rg)
-	registerSharingTasksRoutes(rg)
+	usersH := users_handler.New(usersUc)
+	diariesH := diaries_handler.New(diaryUc)
+	diaryEntriesH := diary_entries_handler.New(diaryEntriesUc)
+	sharingTasksH := sharing_tasks_handler.New()
+
+	registerAuthRoutes(rg, usersH)
+	rg = rg.Group("")
+	rg.Use(jwtMw)
+	registerUsersRoutes(rg, usersH)
+	registerDiariesRoutes(rg, diariesH)
+	registerDiaryEntriesRoutes(rg, diaryEntriesH)
+	registerSharingTasksRoutes(rg, sharingTasksH)
 }
 
-func registerDiariesRoutes(r *gin.RouterGroup, uc usecase.DiaryUseCase) {
-	handler := diaries_handler.New(uc)
-	diariesGroup := r.Group("/diaries")
-	diariesGroup.GET("", handler.GetMyDiaries())
+func registerAuthRoutes(rg *gin.RouterGroup, usersH users_handler.Handler) {
+	authGroup := rg.Group("/auth")
+	authGroup.POST("/login", usersH.Login())
+	authGroup.POST("/register", usersH.Register())
 }
 
-func registerDiaryEntriesRoutes(r *gin.RouterGroup, uc usecase.DiaryEntriesUseCase) {
-	handler := diary_entries_handler.New(uc)
-	diaryEntries := r.Group("/diary-entries")
-	diaryEntries.GET("", handler.GetList())
-	diaryEntries.GET("/:id/download", handler.Download())
-	diaryEntries.POST("", handler.Create())
-	diaryEntries.POST("/:id/upload", handler.Upload())
-	diaryEntries.DELETE("/:id", handler.Delete())
-	diaryEntries.PATCH("/:id", handler.Patch())
+func registerUsersRoutes(rg *gin.RouterGroup, usersH users_handler.Handler) {
+	users := rg.Group("/users")
+	users.GET("/me", usersH.GetMe())
+	users.GET("/:id", usersH.GetUser())
 }
 
-func registerUsersRoutes(r *gin.RouterGroup) {
-	handler := users_handler.New()
-	users := r.Group("/users")
-	users.POST("/login", handler.Login())
-	users.POST("/register", handler.Register())
-	users.GET("/me", handler.GetMe())
-	users.GET("/:id", handler.GetUser())
+func registerSharingTasksRoutes(rg *gin.RouterGroup, sharingTasksH sharing_tasks_handler.Handler) {
+	sharingTasks := rg.Group("/sharing-tasks")
+	sharingTasks.GET("", sharingTasksH.GetAllMine())
+	sharingTasks.POST("", sharingTasksH.Create())
+	sharingTasks.DELETE("/:id", sharingTasksH.DeleteById())
 }
 
-func registerSharingTasksRoutes(r *gin.RouterGroup) {
-	handler := sharing_tasks_handler.New()
-	sharingTasks := r.Group("/sharing-tasks")
-	sharingTasks.GET("", handler.GetAllMine())
-	sharingTasks.POST("", handler.Create())
-	sharingTasks.DELETE("/:id", handler.DeleteById())
+func registerDiaryEntriesRoutes(rg *gin.RouterGroup, diaryEntriesH diary_entries_handler.Handler) {
+	diaryEntries := rg.Group("/diary-entries")
+	diaryEntries.GET("", diaryEntriesH.GetList())
+	diaryEntries.GET("/:id/download", diaryEntriesH.Download())
+	diaryEntries.POST("", diaryEntriesH.Create())
+	diaryEntries.POST("/:id/upload", diaryEntriesH.Upload())
+	diaryEntries.DELETE("/:id", diaryEntriesH.Delete())
+	diaryEntries.PATCH("/:id", diaryEntriesH.Patch())
+}
+
+func registerDiariesRoutes(rg *gin.RouterGroup, diariesH diaries_handler.Handler) {
+	diariesGroup := rg.Group("/diaries")
+	diariesGroup.GET("", diariesH.GetMyDiaries())
+	diariesGroup.POST("", diariesH.CreateDiary())
 }

@@ -12,15 +12,15 @@ type DiariesResponse struct {
 	Items []usecase.Diary `json:"items"`
 }
 
-func (c *handler) GetMyDiaries() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+func (h *handler) GetMyDiaries() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var userId uuid.UUID
 		// TODO userId from jwt
 		userId = uuid.MustParse("de0a2016-6df3-437f-88cb-bec859f3c53f")
-		diaries, err := c.usecase.GetDiariesByUser(ctx.Request.Context(), userId)
+		diaries, err := h.uc.GetDiariesByUser(c.Request.Context(), userId)
 		if err != nil {
 			// TODO log
-			_ = ctx.Error(fmt.Errorf("GetMyDiaries - DiaryUseCase - GetDiariesByUser: %v", err))
+			_ = c.Error(fmt.Errorf("GetMyDiaries - DiaryUseCase - GetDiariesByUser: %v", err))
 			return
 		}
 
@@ -28,6 +28,6 @@ func (c *handler) GetMyDiaries() gin.HandlerFunc {
 			Items: diaries,
 		}
 
-		ctx.JSON(http.StatusOK, response)
+		c.JSON(http.StatusOK, response)
 	}
 }

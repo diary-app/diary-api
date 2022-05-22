@@ -4,20 +4,19 @@ CREATE TABLE users
 (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     username varchar(30) NOT NULL,
-    password_hash varchar NOT NULL,
-    salt text NOT NULL,
-    sharing_public_key varchar NOT NULL,
-    encrypted_sharing_private_key varchar NOT NULL
+    password_hash bytea NOT NULL,
+    salt_for_keys bytea NOT NULL,
+    public_key_for_sharing varchar NOT NULL,
+    encrypted_public_key_for_sharing varchar NOT NULL
 );
 
--- create UNIQUE INDEX ON "Users" ("Username");
+create UNIQUE INDEX ON users (username);
 
 CREATE TABLE diaries
 (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     name text NOT NULL,
-    owner_id uuid REFERENCES users (id) NOT NULL,
-    created_at timestamp NOT NULL
+    owner_id uuid REFERENCES users (id) NOT NULL
 );
 
 CREATE TABLE diary_keys
@@ -40,7 +39,7 @@ CREATE TABLE diary_entries
 CREATE TABLE diary_entries_blocks
 (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    diary_entry_id uuid REFERENCES diary_entries NOT NULL,
+    owner_id uuid REFERENCES users,
     value text NOT NULL
 );
 
