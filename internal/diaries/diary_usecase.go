@@ -2,6 +2,7 @@ package diaries
 
 import (
 	"context"
+	"diary-api/internal/auth"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
 )
@@ -37,6 +38,7 @@ func (uc *diaryUseCase) CreateDiary(ctx context.Context, userId uuid.UUID,
 	return diary, nil
 }
 
-func (uc *diaryUseCase) GetDiariesByUser(ctx context.Context, userId uuid.UUID) ([]usecase.Diary, error) {
+func (uc *diaryUseCase) GetDiariesByUser(ctx context.Context) ([]usecase.Diary, error) {
+	userId := auth.MustGetUserId(ctx)
 	return uc.repo.GetDiariesByUser(ctx, userId)
 }

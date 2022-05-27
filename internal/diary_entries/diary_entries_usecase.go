@@ -4,28 +4,24 @@ import (
 	"context"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
-	"io"
+	"time"
 )
 
 type diaryEntriesUseCase struct {
 	repo usecase.DiaryEntriesRepository
 }
 
-func (d *diaryEntriesUseCase) Create(ctx context.Context, request usecase.CreateDiaryEntryRequest) (*usecase.DiaryEntry, error) {
-	id := uuid.New()
-	entry := &usecase.DiaryEntry{
-		Id:          id,
-		DiaryId:     request.DiaryId,
-		Name:        request.Name,
-		Date:        request.Date,
-		ContentPath: "diary-entries/" + id.String(),
-	}
-	entry, err := d.repo.Create(ctx, entry)
-	if err != nil {
-		return nil, err
-	}
+func (d *diaryEntriesUseCase) GetEntries(ctx context.Context, request usecase.GetDiaryEntriesParams) ([]usecase.DiaryEntry, error) {
+	return d.repo.GetEntries(ctx, request)
+}
 
-	return entry, nil
+func (d *diaryEntriesUseCase) GetById(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry, error) {
+	return d.repo.GetById(ctx, id)
+}
+
+func (d *diaryEntriesUseCase) UpdateContents(ctx context.Context, contentsChanges usecase.DiaryEntryContentsChangeList) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (d *diaryEntriesUseCase) Delete(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -33,24 +29,21 @@ func (d *diaryEntriesUseCase) Delete(ctx context.Context, id uuid.UUID) (bool, e
 	panic("implement me")
 }
 
-func (d *diaryEntriesUseCase) DownloadContents(ctx context.Context, id uuid.UUID) (io.Reader, error) {
-	//TODO implement me
-	panic("implement me")
-}
+func (d *diaryEntriesUseCase) Create(ctx context.Context, r usecase.CreateDiaryEntryRequest) (*usecase.DiaryEntry, error) {
+	id := uuid.New()
+	date := r.Date
+	entry := &usecase.DiaryEntry{
+		Id:      id,
+		DiaryId: r.DiaryId,
+		Name:    r.Name,
+		Date:    time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC),
+	}
+	entry, err := d.repo.Create(ctx, entry)
+	if err != nil {
+		return nil, err
+	}
 
-func (d *diaryEntriesUseCase) GetEntries(ctx context.Context, request usecase.GetDiaryEntriesRequest) ([]usecase.DiaryEntry, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *diaryEntriesUseCase) Update(ctx context.Context, request usecase.UpdateDiaryEntryRequest) (*usecase.DiaryEntry, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (d *diaryEntriesUseCase) Upload(ctx context.Context, id uuid.UUID, contentsStream io.Reader) error {
-	//TODO implement me
-	panic("implement me")
+	return entry, nil
 }
 
 func NewUseCase(repo usecase.DiaryEntriesRepository) usecase.DiaryEntriesUseCase {

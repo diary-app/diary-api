@@ -16,14 +16,14 @@ const (
 )
 
 type usersUseCase struct {
-	tokensManager auth.TokenService
+	tokensService auth.TokenService
 	usersRepo     usecase.UsersRepository
 	diariesRepo   usecase.DiaryRepository
 }
 
 func NewUseCase(t auth.TokenService, r usecase.UsersRepository) usecase.UsersUseCase {
 	return &usersUseCase{
-		tokensManager: t,
+		tokensService: t,
 		usersRepo:     r,
 	}
 }
@@ -56,7 +56,7 @@ func (u *usersUseCase) Register(ctx context.Context, req *usecase.RegisterReques
 		return nil, err
 	}
 
-	tokenStr, err := u.tokensManager.GenerateToken(user.Id)
+	tokenStr, err := u.tokensService.GenerateToken(user.Id)
 	registrationResult := &usecase.RegistrationResult{
 		Token:       tokenStr,
 		SaltForKeys: string(saltBytes),
@@ -79,13 +79,22 @@ func (u *usersUseCase) Login(ctx context.Context, request *usecase.LoginRequest)
 		return nil, err
 	}
 
-	token, err := u.tokensManager.GenerateToken(user.Id)
+	token, err := u.tokensService.GenerateToken(user.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	authResult := &usecase.AuthResult{Token: token}
 	return authResult, nil
+}
+
+func (u *usersUseCase) RefreshToken(ctx context.Context, token string) (*usecase.AuthResult, error) {
+	newToken, err := u.tokensService.RefreshToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &usecase.AuthResult{Token: newToken}, nil
 }
 
 func (u *usersUseCase) GetFullUser(ctx context.Context, userId uuid.UUID) (*usecase.FullUser, error) {

@@ -50,6 +50,7 @@ type AuthResult struct {
 type UsersUseCase interface {
 	Register(ctx context.Context, request *RegisterRequest) (*RegistrationResult, error)
 	Login(ctx context.Context, request *LoginRequest) (*AuthResult, error)
+	RefreshToken(ctx context.Context, token string) (*AuthResult, error)
 	GetFullUser(ctx context.Context, userId uuid.UUID) (*FullUser, error)
 	GetUserById(ctx context.Context, userId uuid.UUID) (*ShortUser, error)
 	GetUserByName(ctx context.Context, username string) (*ShortUser, error)

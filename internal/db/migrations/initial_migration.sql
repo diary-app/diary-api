@@ -34,15 +34,14 @@ CREATE TABLE diary_entries
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     diary_id uuid REFERENCES diaries (id) NOT NULL,
     name text NOT NULL,
-    date date NOT NULL,
-    value jsonb NOT NULL
+    date date NOT NULL
 );
 
-CREATE TABLE diary_entries_blocks
+CREATE TABLE diary_entry_contents
 (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    owner_id uuid REFERENCES users,
-    value text NOT NULL
+    diary_entry_id uuid REFERENCES diary_entries (id) NOT NULL,
+    value jsonb NOT NULL
 );
 
 CREATE TABLE sharing_tasks

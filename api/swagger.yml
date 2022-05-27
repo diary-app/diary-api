@@ -1,32 +1,199 @@
-swagger: "2.0"
+openapi: "3.0.0"
 info:
   title: A personal diary API
   version: 1.0.0
-consumes:
-- application/io.goswagger.examples.todo-list.v1+json
-produces:
-- application/io.goswagger.examples.todo-list.v1+json
-schemes:
-- http
 tags:
+  - name: utils
+  - name: auth
+  - name: users
   - name: diaries
   - name: diary-entries
-  - name: users
   - name: sharing-tasks
-  - name: other
+servers:
+  - url: http://localhost:8080/api
+security:
+  - BearerAuth: []
 paths:
   /ping:
     get:
       tags:
-        - other
+        - utils
       responses:
         200:
           description: OK
-  /users/register:
+      security: []
+  /v1/auth/register:
     post:
+      description: Register new user with specified username/password and extra data
       tags:
-        - users
+        - auth
+      requestBody:
+        $ref: '#/components/requestBodies/RegisterRequestBody'
       responses:
         200:
-          description:
-definitions:
+          $ref: '#/components/responses/RegistrationResponse'
+        401:
+          $ref: '#/components/responses/ErrorResponse'
+      security: []
+  /v1/auth/login:
+    post:
+      description: Login as an existing user with provided username and password
+      tags:
+        - auth
+      requestBody:
+        $ref: '#/components/requestBodies/LoginRequestBody'
+      responses:
+        200:
+          $ref: '#/components/responses/AuthResultResponse'
+        401:
+          $ref: '#/components/responses/ErrorResponse'
+      security: []
+  /v1/auth/refresh:
+    post:
+      description: Refresh existing auth token within 5 minutes until its expiration
+      tags:
+        - auth
+      parameters:
+        - name: authToken
+          in: header
+      responses:
+        200:
+          $ref: '#/components/responses/AuthResultResponse'
+        401:
+          $ref: '#/components/responses/ErrorResponse'
+
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          required: true
+        password:
+          type: string
+          required: true
+        publicKeyForSharing:
+          type: string
+          required: true
+        encryptedPrivateKeyForSharing:
+          type: string
+          required: true
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          required: true
+        password:
+          type: string
+          required: true
+    RegistrationResult:
+      type: object
+      properties:
+        token:
+          type: string
+          required: true
+        saltForKeys:
+          type: string
+          required: true
+    AuthResult:
+      type: object
+      properties:
+        token:
+          type: string
+          required: true
+    FullUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          required: true
+        username:
+          type: string
+          required: true
+        saltForKeys:
+          type: string
+          required: true
+        publicKeyForSharing:
+          type: string
+          required: true
+        encryptedPrivateKeyForSharing:
+          type: string
+          required: true
+    ShortUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          required: true
+        username:
+          type: string
+          required: true
+        publicKeyForSharing:
+          type: string
+          required: true
+    ErrorBody:
+      type: object
+      properties:
+        message:
+          type: string
+          required: true
+
+  requestBodies:
+    RegisterRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RegisterRequest'
+    LoginRequestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoginRequest'
+  responses:
+    ErrorResponse:
+      description: Request finished with error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    RegistrationResponse:
+      description: Successful registration
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RegistrationResult'
+    AuthResultResponse:
+      description: Successful login
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthResult'
+    FullUserResponse:
+      description: Successfully received full user info
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FullUser'
+    ShortUserResponse:
+      description: Successfully received user info
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ShortUser'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+
+
+
+
+

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	MinutesBeforeExpireToRefresh = 1
+	MinutesBeforeExpireToRefresh = 5
 	TokenLifespanMinutes         = 60
 )
 

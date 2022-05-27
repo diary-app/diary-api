@@ -26,7 +26,7 @@ type CreateDiaryRequest struct {
 
 type DiaryUseCase interface {
 	CreateDiary(ctx context.Context, userId uuid.UUID, req *CreateDiaryRequest) (*Diary, error)
-	GetDiariesByUser(ctx context.Context, userId uuid.UUID) ([]Diary, error)
+	GetDiariesByUser(ctx context.Context) ([]Diary, error)
 }
 
 type DiaryRepository interface {

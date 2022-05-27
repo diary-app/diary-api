@@ -1,16 +1,33 @@
 package auth
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
 	"github.com/google/uuid"
 )
 
-func MustGetUserId(c *gin.Context) uuid.UUID {
-	val, ok := c.Get(UserIdKey)
-	if !ok {
-		panic(ErrUserIdNotFoundInCtx)
+func getUserId(ctx context.Context) (uuid.UUID, error) {
+	idStr := ctx.Value(UserIdKey)
+	if idStr == "" {
+		return uuid.UUID{}, ErrUserIdNotFoundInCtx
 	}
 
-	id := val.(uuid.UUID)
+	id := idStr.(uuid.UUID)
+	return id, nil
+}
+
+func MustGetUserId(ctx context.Context) uuid.UUID {
+	id, err := getUserId(ctx)
+	if err != nil {
+		panic(err)
+	}
 	return id
+}
+
+func MustGetAuthToken(ctx context.Context) string {
+	authToken, ok := ctx.Value(AuthToken).(string)
+	if !ok || authToken == "" {
+		panic(ErrAuthTokenNotFoundInCtx)
+	}
+
+	return authToken
 }
