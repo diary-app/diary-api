@@ -12,15 +12,15 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	JwtKey string `env-required:"true" yaml:"jwtKey" env:"JWT_KEY"`
+	JwtKey string `yaml:"jwtKey" env-required:"true" env:"JWT_KEY"`
 }
 
 type DbConfig struct {
-	Host     string `yaml:"host"`
-	DbName   string `yaml:"dbName"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `env-required:"true" yaml:"password" env:"DB_PASSWORD"`
+	Host     string `yaml:"host" env-required:"false" env:"DB_HOST"`
+	Port     int    `yaml:"port" env-required:"false" env:"DB_PORT"`
+	DbName   string `yaml:"dbName" env-required:"false" env:"DB_NAME"`
+	User     string `yaml:"user" env-required:"false" env:"DB_USER"`
+	Password string `yaml:"password" env-required:"true" env:"DB_PASSWORD"`
 }
 
 func Read() (*Config, error) {
