@@ -12,12 +12,11 @@ import (
 )
 
 func RegisterRoutes(r *gin.RouterGroup, jwtMw gin.HandlerFunc, diaryUc usecase.DiaryUseCase, diaryEntriesUc usecase.DiaryEntriesUseCase, usersUc usecase.UsersUseCase, sharingTasksUc usecase.SharingTasksUseCase) {
-	rg := r.Group("/api/v1")
-
-	rg.GET("/ping", func(c *gin.Context) {
+	r.GET("/api/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
 
+	rg := r.Group("/api/v1")
 	registerAuthRoutes(rg, usersUc)
 	authRg := rg.Group("")
 	authRg.Use(jwtMw)
