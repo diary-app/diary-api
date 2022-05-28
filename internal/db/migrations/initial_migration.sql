@@ -7,7 +7,7 @@ CREATE TABLE users
     password_hash bytea NOT NULL,
     salt_for_keys bytea NOT NULL,
     public_key_for_sharing varchar NOT NULL,
-    encrypted_public_key_for_sharing varchar NOT NULL
+    encrypted_private_key_for_sharing varchar NOT NULL
 );
 
 create UNIQUE INDEX ON users (username);
