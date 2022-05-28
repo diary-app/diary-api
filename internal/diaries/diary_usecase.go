@@ -7,18 +7,21 @@ import (
 	"github.com/google/uuid"
 )
 
-type diaryUseCase struct {
-	repo usecase.DiaryRepository
+type UseCase struct {
+	s storage
 }
 
-func NewDiaryUseCase(repo usecase.DiaryRepository) usecase.DiaryUseCase {
-	return &diaryUseCase{
-		repo: repo,
+func NewDiaryUseCase(s storage) *UseCase {
+	return &UseCase{
+		s: s,
 	}
 }
 
-func (uc *diaryUseCase) CreateDiary(ctx context.Context, userId uuid.UUID,
-	req *usecase.CreateDiaryRequest) (*usecase.Diary, error) {
+func (uc *UseCase) CreateDiary(
+	ctx context.Context,
+	userId uuid.UUID,
+	req *usecase.CreateDiaryRequest,
+) (*usecase.Diary, error) {
 	diaryKeys := make([]usecase.DiaryKey, 1)
 	diaryKeys[0] = usecase.DiaryKey{
 		UserId:       userId,
@@ -30,7 +33,7 @@ func (uc *diaryUseCase) CreateDiary(ctx context.Context, userId uuid.UUID,
 		Keys:    diaryKeys,
 	}
 
-	diary, err := uc.repo.CreateDiary(ctx, diary)
+	diary, err := uc.s.CreateDiary(ctx, diary)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +41,7 @@ func (uc *diaryUseCase) CreateDiary(ctx context.Context, userId uuid.UUID,
 	return diary, nil
 }
 
-func (uc *diaryUseCase) GetDiariesByUser(ctx context.Context) ([]usecase.Diary, error) {
+func (uc *UseCase) GetDiariesByUser(ctx context.Context) ([]usecase.Diary, error) {
 	userId := auth.MustGetUserId(ctx)
-	return uc.repo.GetDiariesByUser(ctx, userId)
+	return uc.s.GetDiariesByUser(ctx, userId)
 }

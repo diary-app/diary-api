@@ -9,3 +9,4 @@ postgres:
   port: 6432
   dbName: "diaries"
   user: "postgres"
+  SslMode: "disable"

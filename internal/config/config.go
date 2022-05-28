@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	AppPort string     `yaml:"appPort"`
+	AppPort string     `yaml:"appPort" env-required:"false" env:"APP_PORT"`
 	PG      DbConfig   `yaml:"postgres"`
 	Auth    AuthConfig `yaml:"auth"`
 }
@@ -21,6 +21,7 @@ type DbConfig struct {
 	DbName   string `yaml:"dbName" env-required:"false" env:"DB_NAME"`
 	User     string `yaml:"user" env-required:"false" env:"DB_USER"`
 	Password string `yaml:"password" env-required:"true" env:"DB_PASSWORD"`
+	SslMode  string `yaml:"sslMode" env-required:"false" env:"DB_SSL_MODE" env-default:"disable"`
 }
 
 func Read() (*Config, error) {
