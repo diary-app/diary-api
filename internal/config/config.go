@@ -21,7 +21,6 @@ type DbConfig struct {
 	DbName   string `yaml:"dbName" env-required:"false" env:"DB_NAME"`
 	User     string `yaml:"user" env-required:"false" env:"DB_USER"`
 	Password string `yaml:"password" env-required:"false" env:"DB_PASSWORD"`
-	SslMode  string `yaml:"sslMode" env-required:"false" env:"DB_SSL_MODE" env-default:"disable"`
 }
 
 func Read() (*Config, error) {
