@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"diary-api/internal/db"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -11,27 +12,43 @@ type postgresUsersRepository struct {
 	db *sqlx.DB
 }
 
-func (p *postgresUsersRepository) CreateUser(ctx context.Context, user *usecase.FullUser) (*usecase.FullUser, error) {
-	const insertQuery = `
+func (p *postgresUsersRepository) CreateUser(ctx context.Context, user *usecase.FullUser, diary *usecase.Diary) (*usecase.FullUser, *usecase.Diary, error) {
+	const insertUserQuery = `
 INSERT INTO users(username, password_hash, salt_for_keys, public_key_for_sharing, encrypted_private_key_for_sharing) 
 VALUES(:username,:password_hash,:salt_for_keys,:public_key_for_sharing,:encrypted_private_key_for_sharing) 
-RETURNING id`
-	query, args, err := p.db.BindNamed(insertQuery, user)
+RETURNING :userID`
+	const insertDiaryQuery = `INSERT INTO diaries(name, owner_id) VALUES (:id, :owner_id) RETURNING :diaryID`
+	const insertDiaryKeyQuery = `
+INSERT INTO diary_keys(diary_id, user_id, encrypted_key) 
+VALUES (:diary_id, :user_id, :encrypted_key)`
+
+	tx, err := p.db.Beginx()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	var userID uuid.UUID
+	if err = db.GetNamedContext(tx, ctx, &userID, insertUserQuery, user); err != nil {
+		return nil, nil, err
 	}
 
-	var id uuid.UUID
-	err = p.db.GetContext(ctx, &id, query, args...)
-	if err != nil {
-		return nil, err
+	diary.OwnerID = userID
+	var diaryID uuid.UUID
+	if err = db.GetNamedContext(tx, ctx, &diaryID, insertDiaryQuery, diary); err != nil {
+		return nil, nil, err
 	}
 
-	user.Id = id
-	return user, nil
+	diaryKey := diary.Keys[0]
+	diaryKey.UserID = userID
+	diaryKey.DiaryID = diaryID
+	if _, err = tx.ExecContext(ctx, insertDiaryKeyQuery, diaryKey); err != nil {
+		return nil, nil, err
+	}
+
+	user.ID = userID
+	return user, nil, nil
 }
 
-func (p *postgresUsersRepository) GetUserById(ctx context.Context, id uuid.UUID) (*usecase.FullUser, error) {
+func (p *postgresUsersRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*usecase.FullUser, error) {
 	const query = `SELECT * FROM users WHERE id = $1`
 
 	user := &usecase.FullUser{}

@@ -7,15 +7,15 @@ import (
 )
 
 type Diary struct {
-	Id      uuid.UUID  `json:"id"`
+	ID      uuid.UUID  `json:"id"`
 	Name    string     `json:"name"`
-	OwnerId uuid.UUID  `json:"ownerId"`
+	OwnerID uuid.UUID  `json:"ownerID"`
 	Keys    []DiaryKey `json:"keys"`
 }
 
 type DiaryKey struct {
-	DiaryId      uuid.UUID `json:"diaryId"`
-	UserId       uuid.UUID `json:"userId"`
+	DiaryID      uuid.UUID `json:"diaryID"`
+	UserID       uuid.UUID `json:"userID"`
 	EncryptedKey string    `json:"encryptedKey"`
 }
 
@@ -25,13 +25,12 @@ type CreateDiaryRequest struct {
 }
 
 type DiaryUseCase interface {
-	CreateDiary(ctx context.Context, userId uuid.UUID, req *CreateDiaryRequest) (*Diary, error)
 	GetDiariesByUser(ctx context.Context) ([]Diary, error)
 }
 
 type DiaryRepository interface {
 	CreateDiary(ctx context.Context, diary *Diary) (*Diary, error)
-	GetDiariesByUser(ctx context.Context, userId uuid.UUID) ([]Diary, error)
+	GetDiariesByUser(ctx context.Context, userID uuid.UUID) ([]Diary, error)
 }
 
 // Errors

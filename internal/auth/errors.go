@@ -23,6 +23,6 @@ func (e ErrEarlyForTokenRefresh) Error() string {
 
 var (
 	ErrTokenInvalid           = errors.New("jwt token was invalid")
-	ErrUserIdNotFoundInCtx    = errors.New("user id not found in request context")
+	ErrUserIDNotFoundInCtx    = errors.New("user id not found in request context")
 	ErrAuthTokenNotFoundInCtx = errors.New("auth token not found in request context")
 )

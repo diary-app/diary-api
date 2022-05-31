@@ -5,18 +5,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func getUserId(ctx context.Context) (uuid.UUID, error) {
-	idStr := ctx.Value(UserIdKey)
+func getUserID(ctx context.Context) (uuid.UUID, error) {
+	idStr := ctx.Value(UserIDKey)
 	if idStr == "" {
-		return uuid.UUID{}, ErrUserIdNotFoundInCtx
+		return uuid.UUID{}, ErrUserIDNotFoundInCtx
 	}
 
 	id := idStr.(uuid.UUID)
 	return id, nil
 }
 
-func MustGetUserId(ctx context.Context) uuid.UUID {
-	id, err := getUserId(ctx)
+func MustGetUserID(ctx context.Context) uuid.UUID {
+	id, err := getUserID(ctx)
 	if err != nil {
 		panic(err)
 	}

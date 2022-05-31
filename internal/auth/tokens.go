@@ -14,32 +14,32 @@ const (
 )
 
 type Claims struct {
-	UserId uuid.UUID
+	UserID uuid.UUID
 	jwt.StandardClaims
 }
 
 type TokenService interface {
-	GenerateToken(userId uuid.UUID) (string, error)
+	GenerateToken(userID uuid.UUID) (string, error)
 	ValidateToken(token string) (*Claims, error)
 	RefreshToken(token string) (string, error)
 }
 
-func NewAuthService(cfg *config.AuthConfig, c clock.Clock) TokenService {
-	return &tokensManager{
+func NewTokenService(cfg *config.AuthConfig, c clock.Clock) TokenService {
+	return &tokenService{
 		jwtKey: []byte(cfg.JwtKey),
 		clock:  c,
 	}
 }
 
-type tokensManager struct {
+type tokenService struct {
 	jwtKey []byte
 	clock  clock.Clock
 }
 
-func (t *tokensManager) GenerateToken(userId uuid.UUID) (string, error) {
+func (t *tokenService) GenerateToken(userID uuid.UUID) (string, error) {
 	exp := t.clock.Now().Add(TokenLifespanMinutes * time.Minute)
 	claims := &Claims{
-		UserId: userId,
+		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: exp.Unix(),
 		},
@@ -54,7 +54,7 @@ func (t *tokensManager) GenerateToken(userId uuid.UUID) (string, error) {
 	return tokenString, nil
 }
 
-func (t *tokensManager) ValidateToken(tokenString string) (*Claims, error) {
+func (t *tokenService) ValidateToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, t.getJwtKey)
 	if err != nil {
@@ -68,7 +68,7 @@ func (t *tokensManager) ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-func (t *tokensManager) RefreshToken(tokenString string) (string, error) {
+func (t *tokenService) RefreshToken(tokenString string) (string, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, t.getJwtKey)
 	if err != nil {
@@ -84,9 +84,9 @@ func (t *tokensManager) RefreshToken(tokenString string) (string, error) {
 		return "", NewEarlyForTokenRefreshError(untilExpire.Seconds())
 	}
 
-	return t.GenerateToken(claims.UserId)
+	return t.GenerateToken(claims.UserID)
 }
 
-func (t *tokensManager) getJwtKey(_ *jwt.Token) (interface{}, error) {
+func (t *tokenService) getJwtKey(_ *jwt.Token) (interface{}, error) {
 	return t.jwtKey, nil
 }

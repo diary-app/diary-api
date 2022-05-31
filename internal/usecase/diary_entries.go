@@ -8,7 +8,7 @@ import (
 )
 
 type DiaryEntriesUseCase interface {
-	GetById(ctx context.Context, id uuid.UUID) (*DiaryEntry, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*DiaryEntry, error)
 	Create(ctx context.Context, request CreateDiaryEntryRequest) (*DiaryEntry, error)
 	UpdateContents(ctx context.Context, contentsChanges DiaryEntryContentsChangeList)
 	Delete(ctx context.Context, id uuid.UUID) (bool, error)
@@ -16,7 +16,7 @@ type DiaryEntriesUseCase interface {
 }
 
 type DiaryEntriesRepository interface {
-	GetById(ctx context.Context, id uuid.UUID) (*DiaryEntry, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*DiaryEntry, error)
 	Create(ctx context.Context, entry *DiaryEntry) (*DiaryEntry, error)
 	UpdateContents(ctx context.Context, contentsChanges DiaryEntryContentsChangeList)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -26,28 +26,28 @@ type DiaryEntriesRepository interface {
 // Domain models
 
 type DiaryEntry struct {
-	Id       uuid.UUID     `json:"id"`
-	DiaryId  uuid.UUID     `json:"diaryId"`
+	ID       uuid.UUID     `json:"id"`
+	DiaryID  uuid.UUID     `json:"diaryID"`
 	Name     string        `json:"name"`
 	Date     time.Time     `json:"date"`
 	Contents []interface{} `json:"contents"`
 }
 
 type DiaryEntryBlock struct {
-	Id    uuid.UUID
+	ID    uuid.UUID
 	Value map[string]interface{}
 }
 
 // DTO
 
 type CreateDiaryEntryRequest struct {
-	DiaryId uuid.UUID `json:"diaryId,omitempty" binding:"required"`
+	DiaryID uuid.UUID `json:"diaryID,omitempty" binding:"required"`
 	Name    string    `json:"name,omitempty" binding:"required"`
 	Date    time.Time `json:"date" binding:"required"`
 }
 
 type GetDiaryEntriesParams struct {
-	DiaryId *uuid.UUID `uri:"diaryId,omitempty"`
+	DiaryID *uuid.UUID `uri:"diaryID,omitempty"`
 	Date    *time.Time `uri:"date,omitempty"`
 }
 
@@ -56,7 +56,7 @@ type GetDiaryEntriesResponse struct {
 }
 
 type UpdateDiaryEntryRequest struct {
-	DiaryEntryId uuid.UUID
+	DiaryEntryID uuid.UUID
 	Name         *string
 	Date         *time.Time
 }
@@ -67,8 +67,8 @@ type DiaryEntryContentsChangeList struct {
 
 type DiaryEntryContentChangeRequest struct {
 	ChangeType ContentChangeType       `json:"changeType"`
-	Id         *uuid.UUID              `json:"id"`
-	DiaryId    *uuid.UUID              `json:"diaryId,omitempty"`
+	ID         *uuid.UUID              `json:"id"`
+	DiaryID    *uuid.UUID              `json:"diaryID,omitempty"`
 	Value      *map[string]interface{} `json:"value"`
 }
 

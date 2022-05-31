@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"diary-api/internal/config"
 	"fmt"
 	"github.com/jmoiron/sqlx"
@@ -22,4 +23,15 @@ func InitDb(cfg config.DbConfig) (*sqlx.DB, error) {
 	}
 
 	return db, nil
+}
+
+func GetNamedContext(tx *sqlx.Tx, ctx context.Context, dest interface{}, query string, arg interface{}) error {
+	query, args, err := tx.BindNamed(query, arg)
+	if err != nil {
+		return err
+	}
+	if err = tx.GetContext(ctx, dest, query, args...); err != nil {
+		return err
+	}
+	return nil
 }

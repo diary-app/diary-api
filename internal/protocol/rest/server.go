@@ -2,12 +2,13 @@ package rest
 
 import (
 	"diary-api/internal/auth"
+	authUsecase "diary-api/internal/auth/usecase"
 	"diary-api/internal/config"
 	"diary-api/internal/db"
-	"diary-api/internal/diaries"
 	diaryRepository "diary-api/internal/diaries/repository"
-	"diary-api/internal/diary_entries"
+	diaryUsecase "diary-api/internal/diaries/usecase"
 	diaryEntriesRepository "diary-api/internal/diary_entries/repository"
+	usecase2 "diary-api/internal/diary_entries/usecase"
 	"diary-api/internal/protocol/rest/middleware"
 	v1 "diary-api/internal/protocol/rest/v1"
 	"diary-api/internal/sharing_tasks"
@@ -20,6 +21,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
 type Server interface {
@@ -47,11 +49,12 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 	}
 
 	myClock := clock.New()
-	authService := auth.NewAuthService(&cfg.Auth, myClock)
+	tokenService := auth.NewTokenService(&cfg.Auth, myClock)
 	diaryUc := getDiaryUc(dbConn)
 	diaryEntriesUc := getDiaryEntriesUc(dbConn)
-	usersUc := getUsersUc(dbConn, authService)
+	usersUc := getUsersAndAuthUc(dbConn)
 	sharingTasksUc := getSharingTasksUc(dbConn)
+	authUc := getAuthUc(dbConn, tokenService)
 
 	errorHandlerMw := middleware.ErrorHandler(l)
 	s := &server{
@@ -59,8 +62,13 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 		r:   initRouter(errorHandlerMw),
 	}
 
-	jwtMw := middleware.JwtMiddleware(authService)
-	v1.RegisterRoutes(s.r.Group(""), jwtMw, diaryUc, diaryEntriesUc, usersUc, sharingTasksUc)
+	s.r.GET("/api/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "pong"})
+	})
+
+	jwtMw := middleware.JwtMiddleware(tokenService)
+	rg := s.r.Group("")
+	v1.RegisterRoutes(rg, jwtMw, diaryUc, diaryEntriesUc, usersUc, sharingTasksUc, authUc)
 	return s
 }
 
@@ -85,15 +93,20 @@ func initRouter(errorHandler gin.HandlerFunc) *gin.Engine {
 
 func getDiaryUc(dbConn *sqlx.DB) usecase.DiaryUseCase {
 	diaryRepo := diaryRepository.NewPostgresDiaryRepository(dbConn)
-	return diaries.NewDiaryUseCase(diaryRepo)
+	return diaryUsecase.New(diaryRepo)
 }
 
 func getDiaryEntriesUc(dbConn *sqlx.DB) usecase.DiaryEntriesUseCase {
 	diaryEntriesRepo := diaryEntriesRepository.New(dbConn)
-	return diary_entries.NewUseCase(diaryEntriesRepo)
+	return usecase2.New(diaryEntriesRepo)
 }
 
-func getUsersUc(conn *sqlx.DB, tokensManager auth.TokenService) usecase.UsersUseCase {
+func getUsersAndAuthUc(conn *sqlx.DB) usecase.UsersUseCase {
 	usersRepo := usersRepository.New(conn)
-	return users.NewUseCase(tokensManager, usersRepo)
+	return users.NewUseCase(usersRepo)
+}
+
+func getAuthUc(conn *sqlx.DB, tokenService auth.TokenService) usecase.AuthUseCase {
+	usersRepo := usersRepository.New(conn)
+	return authUsecase.New(usersRepo, tokenService)
 }

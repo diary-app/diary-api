@@ -21,7 +21,7 @@ func JwtMiddleware(tokenService auth.TokenService) gin.HandlerFunc {
 		}
 
 		c.Set(auth.AuthToken, jwtToken)
-		c.Set(auth.UserIdKey, claims.UserId)
+		c.Set(auth.UserIDKey, claims.UserID)
 		c.Next()
 	}
 }

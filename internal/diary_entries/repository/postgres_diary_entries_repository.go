@@ -14,14 +14,14 @@ type pgRepo struct {
 }
 
 type diaryEntry struct {
-	Id      uuid.UUID `db:"id"`
-	DiaryId uuid.UUID `db:"diary_id"`
+	ID      uuid.UUID `db:"id"`
+	DiaryID uuid.UUID `db:"diary_id"`
 	Name    string    `db:"name"`
 	Date    time.Time `db:"date"`
 }
 
 type diaryEntryContent struct {
-	DiaryEntryId uuid.UUID   `db:"diary_entry_id"`
+	DiaryEntryID uuid.UUID   `db:"diary_entry_id"`
 	Value        interface{} `db:"value"`
 }
 
@@ -31,15 +31,15 @@ type diaryEntryWithContent struct {
 }
 
 func (p *pgRepo) GetEntries(ctx context.Context, r usecase.GetDiaryEntriesParams) ([]usecase.DiaryEntry, error) {
-	userId := auth.MustGetUserId(ctx)
-	namedArgs := map[string]interface{}{"user_id": userId}
+	userID := auth.MustGetUserID(ctx)
+	namedArgs := map[string]interface{}{"user_id": userID}
 	query := `
 		SELECT * FROM diary_entries 
         WHERE diary_id IN (
         	SELECT id FROM diaries d JOIN diary_keys dk ON d.id = dk.diary_id WHERE dk.user_id = :user_id)`
-	if r.DiaryId != nil {
+	if r.DiaryID != nil {
 		query += `AND WHERE diary_id = :diary_id`
-		namedArgs["diary_id"] = r.DiaryId
+		namedArgs["diary_id"] = r.DiaryID
 	}
 	if r.Date != nil {
 		query += `AND WHERE date = :date`
@@ -62,19 +62,19 @@ func (p *pgRepo) GetEntries(ctx context.Context, r usecase.GetDiaryEntriesParams
 	return ucEntries, nil
 }
 
-func (p *pgRepo) GetById(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry, error) {
+func (p *pgRepo) GetByID(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry, error) {
 	const entryQuery = `SELECT id, diary_id, name, date FROM diary_entries WHERE id = $1`
 	entry := &diaryEntryWithContent{}
 	if err := p.db.GetContext(ctx, entry, entryQuery, id); err != nil {
 		return nil, err
 	}
 
-	userId := auth.MustGetUserId(ctx)
+	userID := auth.MustGetUserID(ctx)
 	const checkAccessQuery = `SELECT EXISTS(
     	SELECT * FROM diaries d JOIN diary_keys dk ON d.id = dk.diary_id 
 		WHERE d.id = $1 AND dk.user_id = $2)`
 	var hasAccess bool
-	if err := p.db.QueryRowxContext(ctx, checkAccessQuery, entry.DiaryId, userId).Scan(&hasAccess); err != nil {
+	if err := p.db.QueryRowxContext(ctx, checkAccessQuery, entry.DiaryID, userID).Scan(&hasAccess); err != nil {
 		return nil, err
 	}
 	if !hasAccess {
@@ -87,8 +87,8 @@ func (p *pgRepo) GetById(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry
 	}
 
 	result := &usecase.DiaryEntry{
-		Id:       entry.Id,
-		DiaryId:  entry.DiaryId,
+		ID:       entry.ID,
+		DiaryID:  entry.DiaryID,
 		Name:     entry.Name,
 		Date:     entry.Date,
 		Contents: make([]interface{}, len(entry.Contents)),
@@ -125,8 +125,8 @@ func (p *pgRepo) Create(ctx context.Context, entry *usecase.DiaryEntry) (*usecas
 
 func mapDiaryEntryToUc(e diaryEntry) usecase.DiaryEntry {
 	return usecase.DiaryEntry{
-		Id:       e.Id,
-		DiaryId:  e.DiaryId,
+		ID:       e.ID,
+		DiaryID:  e.DiaryID,
 		Name:     e.Name,
 		Date:     e.Date,
 		Contents: nil,

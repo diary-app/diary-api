@@ -16,7 +16,7 @@ type pgSharingTasksRepo struct {
 func (p *pgSharingTasksRepo) CreateSharingTask(ctx context.Context, sharingTask *usecase.SharingTask) error {
 	const checkKeyQuery = `SELECT EXISTS(SELECT * FROM diary_keys WHERE diary_id = $1 AND user_id = $2)`
 	var exists bool
-	err := p.db.QueryRowxContext(ctx, checkKeyQuery, sharingTask.DiaryId, sharingTask.ReceiverUserId).Scan(&exists)
+	err := p.db.QueryRowxContext(ctx, checkKeyQuery, sharingTask.DiaryID, sharingTask.ReceiverUserID).Scan(&exists)
 	if err != nil {
 		return err
 	}
@@ -40,22 +40,22 @@ VALUES (:diary_id, :receiver_user_id, :encrypted_diary_key, :shared_at)`
 	return nil
 }
 
-func (p *pgSharingTasksRepo) GetSharingTasks(ctx context.Context, userId uuid.UUID) ([]usecase.SharingTask, error) {
+func (p *pgSharingTasksRepo) GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]usecase.SharingTask, error) {
 	const query = `
 SELECT diary_id, receiver_user_id, encrypted_diary_key, shared_at FROM sharing_tasks WHERE receiver_user_id = $1`
 	tasksArr := make([]usecase.SharingTask, 0)
-	if err := p.db.SelectContext(ctx, &tasksArr, query, userId); err != nil {
+	if err := p.db.SelectContext(ctx, &tasksArr, query, userID); err != nil {
 		return nil, err
 	}
 
 	return tasksArr, nil
 }
 
-func (p *pgSharingTasksRepo) DeleteSharingTask(ctx context.Context, diaryId uuid.UUID, receiverId uuid.UUID) error {
+func (p *pgSharingTasksRepo) DeleteSharingTask(ctx context.Context, diaryID uuid.UUID, receiverID uuid.UUID) error {
 	const query = `
 DELETE FROM sharing_tasks WHERE diary_id = $1 AND receiver_user_id = $2`
 
-	if _, err := p.db.ExecContext(ctx, query, diaryId, receiverId); err != nil {
+	if _, err := p.db.ExecContext(ctx, query, diaryID, receiverID); err != nil {
 		return err
 	}
 

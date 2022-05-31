@@ -8,13 +8,13 @@ import (
 )
 
 func Test_postgresDiaryRepository_GetDiariesByUser(t *testing.T) {
-	userId := uuid.New()
-	diaryIds := make([]uuid.UUID, 3)
-	for i := range diaryIds {
-		diaryIds[i] = uuid.New()
+	userID := uuid.New()
+	diaryIDs := make([]uuid.UUID, 3)
+	for i := range diaryIDs {
+		diaryIDs[i] = uuid.New()
 	}
 
-	query, args, err := sqlx.In("SELECT * FROM diary_keys WHERE user_id = ? AND diary_id IN (?)", userId, diaryIds)
+	query, args, err := sqlx.In("SELECT * FROM diary_keys WHERE user_id = ? AND diary_id IN (?)", userID, diaryIDs)
 	if err != nil {
 		t.Error(err)
 		return
