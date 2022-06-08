@@ -22,7 +22,7 @@ func (u *UseCase) Register(ctx context.Context, req *usecase.RegisterRequest) (*
 	if err == nil && existingUser != nil {
 		return nil, usecase.ErrUsernameTaken{Username: existingUser.Username}
 	}
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return nil, err
 	}
 
@@ -56,7 +56,7 @@ func mapRegisterRequestToUserAndDiary(req *usecase.RegisterRequest) (*usecase.Fu
 	user := &usecase.FullUser{
 		Username:                      req.Username,
 		PasswordHash:                  passwordHashBytes,
-		SaltForKeys:                   []byte(req.Salt),
+		SaltForKeys:                   []byte(req.MasterKeySalt),
 		PublicKeyForSharing:           req.PublicKey,
 		EncryptedPrivateKeyForSharing: req.EncryptedPrivateKey,
 	}

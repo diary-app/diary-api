@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (h *handler) GetEntriesList() gin.HandlerFunc {
+func (h *handler) GetEntries() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := usecase.GetDiaryEntriesParams{}
 		if err := c.ShouldBindUri(&req); err != nil {
@@ -20,6 +20,6 @@ func (h *handler) GetEntriesList() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, usecase.GetDiaryEntriesResponse{Items: entries})
+		c.JSON(http.StatusOK, entries)
 	}
 }

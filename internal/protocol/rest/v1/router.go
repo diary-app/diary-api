@@ -56,7 +56,7 @@ func registerSharingTasksRoutes(rg *gin.RouterGroup, uc usecase.SharingTasksUseC
 func registerDiaryEntriesRoutes(rg *gin.RouterGroup, diaryEntriesUc usecase.DiaryEntriesUseCase) {
 	diaryEntriesH := diaryEntries.New(diaryEntriesUc)
 	diaryEntriesRoute := rg.Group("/diary-entries")
-	diaryEntriesRoute.GET("", diaryEntriesH.GetEntriesList())
+	diaryEntriesRoute.GET("", diaryEntriesH.GetEntries())
 	diaryEntriesRoute.GET("/:id", diaryEntriesH.GetByID())
 	diaryEntriesRoute.POST("", diaryEntriesH.Create())
 	diaryEntriesRoute.PATCH("/:id", diaryEntriesH.PatchEntry())

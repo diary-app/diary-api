@@ -1,25 +1,19 @@
 package users
 
 import (
+	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 )
 
 func (h *handler) GetUserByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idStr := c.Param("id")
-		if idStr == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "'id' in path should not be empty"})
+		id, ok := utils.ParseUUIDFromPath(c, "id")
+		if !ok {
 			return
 		}
 
-		id, err := uuid.Parse(idStr)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "'id' in path was not a valid UUID"})
-			return
-		}
 		user, err := h.uc.GetUserByID(c, id)
 		if err != nil {
 			if err == usecase.ErrUserNotFound {

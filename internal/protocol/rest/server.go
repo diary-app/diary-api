@@ -8,7 +8,7 @@ import (
 	diaryRepository "diary-api/internal/diaries/repository"
 	diaryUsecase "diary-api/internal/diaries/usecase"
 	diaryEntriesRepository "diary-api/internal/diary_entries/repository"
-	usecase2 "diary-api/internal/diary_entries/usecase"
+	diaryEntriesUsecase "diary-api/internal/diary_entries/usecase"
 	"diary-api/internal/protocol/rest/middleware"
 	v1 "diary-api/internal/protocol/rest/v1"
 	"diary-api/internal/sharing_tasks"
@@ -98,7 +98,7 @@ func getDiaryUc(dbConn *sqlx.DB) usecase.DiaryUseCase {
 
 func getDiaryEntriesUc(dbConn *sqlx.DB) usecase.DiaryEntriesUseCase {
 	diaryEntriesRepo := diaryEntriesRepository.New(dbConn)
-	return usecase2.New(diaryEntriesRepo)
+	return diaryEntriesUsecase.New(diaryEntriesRepo)
 }
 
 func getUsersAndAuthUc(conn *sqlx.DB) usecase.UsersUseCase {

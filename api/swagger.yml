@@ -34,9 +34,9 @@ paths:
         200:
           $ref: '#/components/responses/RegistrationResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
       security: []
   /v1/auth/login:
     post:
@@ -49,9 +49,9 @@ paths:
         200:
           $ref: '#/components/responses/AuthResultResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
       security: []
   /v1/auth/refresh:
     post:
@@ -62,9 +62,9 @@ paths:
         200:
           $ref: '#/components/responses/AuthResultResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
   /v1/users/me:
     get:
       description: Get full info about current user
@@ -74,9 +74,9 @@ paths:
         200:
           $ref: '#/components/responses/FullUserResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
   /v1/users/{name}:
     get:
       description: Get public info about current user
@@ -90,9 +90,9 @@ paths:
         200:
           $ref: '#/components/responses/ShortUserResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
         404:
           description: User with given name was not found
   /v1/diaries:
@@ -104,9 +104,9 @@ paths:
         200:
           $ref: '#/components/responses/DiariesResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
   /v1/diary-entries:
     get:
       description: Get diary entries
@@ -129,9 +129,9 @@ paths:
         200:
           $ref: '#/components/responses/DiaryEntriesResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
     post:
       description: Create diary entry
       tags:
@@ -142,10 +142,26 @@ paths:
         200:
           $ref: '#/components/responses/CreateDiaryEntryResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
   /v1/diary-entires/{id}:
+    get:
+      description: Get diary entry
+      tags:
+        - diary-entries
+      parameters:
+        - name: id
+          in: path
+          description: ID of entry to get
+          required: true
+      responses:
+        200:
+          $ref: '#/components/responses/GetDiaryEntryResponse'
+        400:
+          $ref: '#/components/responses/BadRequestResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedResponse'
     patch:
       description: Update diary entry
       tags:
@@ -161,9 +177,9 @@ paths:
         200:
           $ref: '#/components/responses/UpdateDiaryEntryResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
         404:
           description: Diary entry with given ID was not found
     delete:
@@ -179,9 +195,9 @@ paths:
         204:
           description: Deleted diary entry
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
   /v1/sharing-tasks:
     get:
       description: Get available sharing tasks where current user is receiver
@@ -191,9 +207,9 @@ paths:
         200:
           $ref: '#/components/responses/AvailableSharingTasksResponse'
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
     post:
       description: Create sharing task to share a diary
       tags:
@@ -223,9 +239,9 @@ paths:
         204:
           description: Shared diary was successfully accepted
         400:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/BadRequestResponse'
         401:
-          $ref: '#/components/responses/ErrorResponse'
+          $ref: '#/components/responses/UnauthorizedResponse'
         404:
           description: Shared diary with given diary ID was not found
 
@@ -240,10 +256,16 @@ components:
         password:
           type: string
           required: true
-        publicKeyForSharing:
+        masterKeySalt:
           type: string
           required: true
-        encryptedPrivateKeyForSharing:
+        publicKey:
+          type: string
+          required: true
+        encryptedPrivateKey:
+          type: string
+          required: true
+        encryptedDiaryKey:
           type: string
           required: true
     LoginRequest:
@@ -261,9 +283,10 @@ components:
         token:
           type: string
           required: true
-        saltForKeys:
+        diaryId:
+          description: ID of new diary crated for the registered user
           type: string
-          required: true
+          format: uuid
     AuthResult:
       type: object
       properties:
@@ -272,23 +295,16 @@ components:
           required: true
     FullUser:
       type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          required: true
-        username:
-          type: string
-          required: true
-        saltForKeys:
-          type: string
-          required: true
-        publicKeyForSharing:
-          type: string
-          required: true
-        encryptedPrivateKeyForSharing:
-          type: string
-          required: true
+      allOf:
+        - $ref: '#/components/schemas/ShortUser'
+        - type: object
+          properties:
+            masterKeySalt:
+              type: string
+              required: true
+            encryptedPrivateKey:
+              type: string
+              required: true
     ShortUser:
       type: object
       properties:
@@ -299,7 +315,7 @@ components:
         username:
           type: string
           required: true
-        publicKeyForSharing:
+        publicKey:
           type: string
           required: true
     ErrorBody:
@@ -327,11 +343,26 @@ components:
         id:
           type: string
           format: uuid
+        diaryId:
+          type: string
+          format: uuid
         name:
           type: string
         date:
           type: string
           format: date
+    FullDiaryEntry:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ShortDiaryEntry'
+        - type: object
+          properties:
+            value:
+              type: string
+            blocks:
+              type: array
+              items:
+                $ref: '#/components/schemas/DiaryEntryBlock'
     DiaryEntryBlock:
       type: object
       properties:
@@ -339,7 +370,7 @@ components:
           type: string
           format: uuid
         value:
-          type: object
+          type: string
     SharingTask:
       type: object
       properties:
@@ -378,6 +409,9 @@ components:
           schema:
             type: object
             properties:
+              diaryId:
+                type: string
+                required: true
               name:
                 type: string
                 required: true
@@ -385,10 +419,9 @@ components:
                 type: string
                 format: date
                 required: true
-              blocks:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DiaryEntryBlock'
+              value:
+                type: string
+                required: true
     UpdateDiaryEntryRequestBody:
       required: true
       content:
@@ -461,8 +494,14 @@ components:
 
 
   responses:
-    ErrorResponse:
-      description: Request finished with error
+    BadRequestResponse:
+      description: Bad request, required parameters are missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    UnauthorizedResponse:
+      description: Unauthorized, auth token is missing or invalid
       content:
         application/json:
           schema:
@@ -505,6 +544,12 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ShortDiaryEntry'
+    GetDiaryEntryResponse:
+      description: Got diary entry
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FullDiaryEntry'
     CreateDiaryEntryResponse:
       description: Created diary entry
       content:
@@ -530,9 +575,3 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
-
-
-
-
-
-

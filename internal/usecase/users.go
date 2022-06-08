@@ -29,9 +29,9 @@ type ShortUser struct {
 type RegisterRequest struct {
 	Username            string `json:"username" binding:"required"`
 	Password            string `json:"password" binding:"required"`
-	Salt                string `json:"salt" binding:"required"`
-	PublicKey           string `json:"publicKeyForSharing" binding:"required"`
-	EncryptedPrivateKey string `json:"encryptedPrivateKeyForSharing" binding:"required"`
+	MasterKeySalt       string `json:"masterKeySalt" binding:"required"`
+	PublicKey           string `json:"publicKey" binding:"required"`
+	EncryptedPrivateKey string `json:"encryptedPrivateKey" binding:"required"`
 	EncryptedDiaryKey   string `json:"encryptedDiaryKey" binding:"required"`
 }
 

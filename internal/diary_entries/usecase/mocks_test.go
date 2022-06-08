@@ -95,14 +95,16 @@ func (mr *MockstorageMockRecorder) GetEntries(ctx, request interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntries", reflect.TypeOf((*Mockstorage)(nil).GetEntries), ctx, request)
 }
 
-// UpdateContents mocks base method.
-func (m *Mockstorage) UpdateContents(ctx context.Context, contentsChanges usecase.DiaryEntryContentsChangeList) {
+// Update mocks base method.
+func (m *Mockstorage) Update(ctx context.Context, id uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "UpdateContents", ctx, contentsChanges)
+	ret := m.ctrl.Call(m, "Update", ctx, id, r)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// UpdateContents indicates an expected call of UpdateContents.
-func (mr *MockstorageMockRecorder) UpdateContents(ctx, contentsChanges interface{}) *gomock.Call {
+// Update indicates an expected call of Update.
+func (mr *MockstorageMockRecorder) Update(ctx, id, r interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContents", reflect.TypeOf((*Mockstorage)(nil).UpdateContents), ctx, contentsChanges)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*Mockstorage)(nil).Update), ctx, id, r)
 }

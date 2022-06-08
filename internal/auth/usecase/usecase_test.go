@@ -17,14 +17,6 @@ type commonTestCase struct {
 	tokenService func(ctrl *gomock.Controller) *MocktokenService
 }
 
-type registerTestCase struct {
-	name         string
-	req          *usecase.RegisterRequest
-	userStorage  func(ctrl *gomock.Controller) *Mockstorage
-	tokenService func(ctrl *gomock.Controller) *MocktokenService
-	assertFunc   func(t *testing.T, result *usecase.RegistrationResult, err error)
-}
-
 type loginTestCase struct {
 	name string
 	req  *usecase.LoginRequest
@@ -37,18 +29,26 @@ func TestUseCase_Register(t *testing.T) {
 	freeName := "freeName"
 	takenName := "takenName"
 	newUserID := uuid.MustParse("b578d867-8c4f-448e-97c8-6d5decb9b6ad")
+	newDiaryID := uuid.MustParse("4c338341-2eb6-4434-a3ab-d862ec72b441")
 	wantToken := "someToken"
 	unexpectedError := errors.New("unexpected error")
 
-	tests := []registerTestCase{
+	tests := []struct {
+		name         string
+		req          *usecase.RegisterRequest
+		storage      func(ctrl *gomock.Controller) *Mockstorage
+		tokenService func(ctrl *gomock.Controller) *MocktokenService
+		assertFunc   func(t *testing.T, result *usecase.RegistrationResult, err error)
+	}{
 		{
 			name: "Returns RegistrationResult when user with name does not exist and successfully created",
 			req:  &usecase.RegisterRequest{Username: freeName},
-			userStorage: func(ctrl *gomock.Controller) *Mockstorage {
+			storage: func(ctrl *gomock.Controller) *Mockstorage {
 				s := NewMockstorage(ctrl)
 				s.EXPECT().GetUserByName(context.Background(), freeName).Return(nil, sql.ErrNoRows)
 				newUser := &usecase.FullUser{Username: freeName, ID: newUserID}
-				s.EXPECT().CreateUser(context.Background(), gomock.Any(), gomock.Any()).Return(newUser, nil)
+				newDiary := &usecase.Diary{ID: newDiaryID}
+				s.EXPECT().CreateUser(context.Background(), gomock.Any(), gomock.Any()).Return(newUser, newDiary, nil)
 				return s
 			},
 			tokenService: func(ctrl *gomock.Controller) *MocktokenService {
@@ -59,13 +59,14 @@ func TestUseCase_Register(t *testing.T) {
 			assertFunc: func(t *testing.T, result *usecase.RegistrationResult, err error) {
 				assert.NotNil(t, result)
 				assert.Equal(t, result.Token, wantToken)
+				assert.Equal(t, result.DiaryID, newDiaryID)
 				assert.Nil(t, err)
 			},
 		},
 		{
 			name: "Returns ErrUsernameTaken when user with given name already exists",
 			req:  &usecase.RegisterRequest{Username: takenName},
-			userStorage: func(ctrl *gomock.Controller) *Mockstorage {
+			storage: func(ctrl *gomock.Controller) *Mockstorage {
 				s := NewMockstorage(ctrl)
 				existingUser := &usecase.FullUser{Username: takenName}
 				s.EXPECT().GetUserByName(context.Background(), takenName).Return(existingUser, nil)
@@ -85,7 +86,7 @@ func TestUseCase_Register(t *testing.T) {
 		{
 			name: "Returns error from user storage when GetUserByName returns unexpected error",
 			req:  &usecase.RegisterRequest{Username: takenName},
-			userStorage: func(ctrl *gomock.Controller) *Mockstorage {
+			storage: func(ctrl *gomock.Controller) *Mockstorage {
 				s := NewMockstorage(ctrl)
 				s.EXPECT().GetUserByName(context.Background(), takenName).Return(nil, unexpectedError)
 				return s
@@ -101,7 +102,7 @@ func TestUseCase_Register(t *testing.T) {
 		{
 			name: "Returns error from user storage when CreateUser returns unexpected error",
 			req:  &usecase.RegisterRequest{Username: freeName},
-			userStorage: func(ctrl *gomock.Controller) *Mockstorage {
+			storage: func(ctrl *gomock.Controller) *Mockstorage {
 				s := NewMockstorage(ctrl)
 				s.EXPECT().GetUserByName(context.Background(), freeName).Return(nil, sql.ErrNoRows)
 				s.EXPECT().CreateUser(context.Background(), gomock.Any(), gomock.Any()).
@@ -119,7 +120,7 @@ func TestUseCase_Register(t *testing.T) {
 		{
 			name: "Returns error from token service when GenerateToken returns unexpected error",
 			req:  &usecase.RegisterRequest{Username: freeName},
-			userStorage: func(ctrl *gomock.Controller) *Mockstorage {
+			storage: func(ctrl *gomock.Controller) *Mockstorage {
 				s := NewMockstorage(ctrl)
 				createdUser := &usecase.FullUser{ID: newUserID}
 				s.EXPECT().GetUserByName(context.Background(), freeName).Return(nil, sql.ErrNoRows)
@@ -147,7 +148,7 @@ func TestUseCase_Register(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			u := authUsecase.New(tc.userStorage(ctrl), tc.tokenService(ctrl))
+			u := authUsecase.New(tc.storage(ctrl), tc.tokenService(ctrl))
 			d, err := u.Register(context.Background(), tc.req)
 			tc.assertFunc(t, d, err)
 		})

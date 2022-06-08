@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"diary-api/internal/db"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -12,7 +14,8 @@ type postgresUsersRepository struct {
 	db *sqlx.DB
 }
 
-func (p *postgresUsersRepository) CreateUser(ctx context.Context, user *usecase.FullUser, diary *usecase.Diary) (*usecase.FullUser, *usecase.Diary, error) {
+func (p *postgresUsersRepository) CreateUser(
+	ctx context.Context, user *usecase.FullUser, diary *usecase.Diary) (*usecase.FullUser, *usecase.Diary, error) {
 	const insertUserQuery = `
 INSERT INTO users(username, password_hash, salt_for_keys, public_key_for_sharing, encrypted_private_key_for_sharing) 
 VALUES(:username,:password_hash,:salt_for_keys,:public_key_for_sharing,:encrypted_private_key_for_sharing) 
@@ -44,8 +47,16 @@ VALUES (:diary_id, :user_id, :encrypted_key)`
 		return nil, nil, err
 	}
 
+	if err = tx.Commit(); err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return nil, nil, multierror.Append(err, rbErr)
+		}
+		return nil, nil, err
+	}
+
 	user.ID = userID
-	return user, nil, nil
+	diary.ID = diaryID
+	return user, diary, nil
 }
 
 func (p *postgresUsersRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*usecase.FullUser, error) {
@@ -63,6 +74,9 @@ func (p *postgresUsersRepository) GetUserByName(ctx context.Context, username st
 	const query = `SELECT * FROM users WHERE username = $1`
 	user := &usecase.FullUser{}
 	if err := p.db.GetContext(ctx, user, query, username); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return user, nil

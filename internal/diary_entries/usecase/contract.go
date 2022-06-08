@@ -10,7 +10,7 @@ import (
 type storage interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry, error)
 	Create(ctx context.Context, entry *usecase.DiaryEntry) (*usecase.DiaryEntry, error)
-	UpdateContents(ctx context.Context, contentsChanges usecase.DiaryEntryContentsChangeList)
+	Update(ctx context.Context, id uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetEntries(ctx context.Context, request usecase.GetDiaryEntriesParams) ([]usecase.DiaryEntry, error)
 }

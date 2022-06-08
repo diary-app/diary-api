@@ -13,7 +13,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.2.6
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.4.0
-	github.com/lib/pq v1.10.6
+	github.com/lib/pq v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
