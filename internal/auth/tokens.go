@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	MinutesBeforeExpireToRefresh = 5
+	SecondsBeforeExpireToRefresh = 5 * time.Minute
 	TokenLifespanMinutes         = 60
 )
 
@@ -80,8 +80,8 @@ func (t *tokenService) RefreshToken(tokenString string) (string, error) {
 	}
 
 	untilExpire := time.Unix(claims.ExpiresAt, 0).Sub(t.clock.Now())
-	if untilExpire > MinutesBeforeExpireToRefresh*time.Minute {
-		return "", NewEarlyForTokenRefreshError(untilExpire.Seconds())
+	if untilExpire > SecondsBeforeExpireToRefresh {
+		return "", EarlyForTokenRefreshError{untilExpire.Seconds()}
 	}
 
 	return t.GenerateToken(claims.UserID)

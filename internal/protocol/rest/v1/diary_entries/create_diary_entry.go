@@ -17,10 +17,15 @@ func (h *handler) Create() gin.HandlerFunc {
 
 		entry, err := h.uc.Create(c, *request)
 		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			accessErr, ok := err.(*usecase.NoAccessToDiaryError)
+			if ok {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": accessErr.Error()})
+			} else {
+				_ = c.AbortWithError(http.StatusInternalServerError, err)
+			}
 			return
 		}
 
-		c.JSON(http.StatusOK, entry)
+		c.JSON(http.StatusOK, mapToEntryResponse(entry))
 	}
 }

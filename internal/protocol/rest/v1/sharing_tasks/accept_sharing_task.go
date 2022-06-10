@@ -1,36 +1,21 @@
 package sharing_tasks
 
 import (
-	"diary-api/internal/auth"
+	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 )
 
-const (
-	PathDiaryIDKey = "diaryID"
-)
-
-func (h *handler) AcceptByDiaryID() gin.HandlerFunc {
+func (h *handler) AcceptSharedDiary() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		diaryIDStr := c.Param(PathDiaryIDKey)
-		if diaryIDStr == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest,
-				gin.H{"message": fmt.Sprintf("path should contain diary id (/%v=:diaryID)", PathDiaryIDKey)})
+		req := &usecase.AcceptSharingTaskRequest{}
+		if err := c.ShouldBindJSON(req); err != nil {
+			utils.RespondInvalidBodyJSON(c)
 			return
 		}
 
-		diaryID, err := uuid.Parse(diaryIDStr)
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest,
-				gin.H{"message": fmt.Sprintf("%v should be a valid UUID", PathDiaryIDKey)})
-			return
-		}
-
-		userID := auth.MustGetUserID(c)
-		err = h.uc.DeleteSharingTask(c, diaryID, userID)
+		err := h.uc.AcceptSharingTask(c, req)
 		if err != nil && err != usecase.ErrCommonNotFound {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return

@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"database/sql"
 	"diary-api/internal/usecase"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
@@ -57,8 +56,8 @@ func mapRegisterRequestToUserAndDiary(req *usecase.RegisterRequest) (*usecase.Fu
 		Username:                      req.Username,
 		PasswordHash:                  passwordHashBytes,
 		SaltForKeys:                   []byte(req.MasterKeySalt),
-		PublicKeyForSharing:           req.PublicKey,
-		EncryptedPrivateKeyForSharing: req.EncryptedPrivateKey,
+		PublicKeyForSharing:           req.PublicKeyForSharing,
+		EncryptedPrivateKeyForSharing: req.EncryptedPrivateKeyForSharing,
 	}
 	keys := make([]usecase.DiaryKey, 1)
 	keys[0] = usecase.DiaryKey{
@@ -74,10 +73,10 @@ func mapRegisterRequestToUserAndDiary(req *usecase.RegisterRequest) (*usecase.Fu
 func (u *UseCase) Login(ctx context.Context, request *usecase.LoginRequest) (*usecase.AuthResult, error) {
 	user, err := u.storage.GetUserByName(ctx, request.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, usecase.ErrUserNotFound
-		}
 		return nil, err
+	}
+	if user == nil {
+		return nil, usecase.ErrUserNotFound
 	}
 
 	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(request.Password))

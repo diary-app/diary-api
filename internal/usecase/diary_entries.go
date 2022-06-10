@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"diary-api/internal/protocol/rest/common"
 	"fmt"
 	"github.com/google/uuid"
 	"strings"
@@ -27,11 +28,12 @@ type DiaryEntriesRepository interface {
 // Domain models
 
 type DiaryEntry struct {
-	ID      uuid.UUID         `json:"id"`
-	DiaryID uuid.UUID         `json:"diaryID"`
-	Name    string            `json:"name"`
-	Date    time.Time         `json:"date"`
-	Blocks  []DiaryEntryBlock `json:"blocks,omitempty"`
+	ID      uuid.UUID         `json:"id" db:"id"`
+	DiaryID uuid.UUID         `json:"diaryID" db:"diary_id"`
+	Name    string            `json:"name" db:"name"`
+	Date    time.Time         `json:"date" db:"date"`
+	Value   string            `json:"value" db:"value"`
+	Blocks  []DiaryEntryBlock `json:"blocks"`
 }
 
 type DiaryEntryBlock struct {
@@ -42,19 +44,19 @@ type DiaryEntryBlock struct {
 // DTO
 
 type CreateDiaryEntryRequest struct {
-	DiaryID uuid.UUID `json:"diaryId" binding:"required"`
-	Name    string    `json:"name" binding:"required"`
-	Date    time.Time `json:"date" binding:"required"`
-	Value   string    `json:"value" binding:"required"`
+	DiaryID uuid.UUID       `json:"diaryId" binding:"required"`
+	Name    string          `json:"name" binding:"required"`
+	Date    common.DateOnly `json:"date" binding:"required"`
+	Value   string          `json:"value" binding:"required"`
 }
 
 type UpdateDiaryEntryRequest struct {
-	DiaryId        *uuid.UUID           `json:"diaryId" binding:"optional"`
-	Name           *string              `json:"name" binding:"optional"`
-	Date           *time.Time           `json:"date" binding:"optional"`
-	Value          *string              `json:"value" binding:"optional"`
-	BlocksToUpsert []DiaryEntryBlockDto `json:"blocksToUpsert" binding:"optional"`
-	BlocksToDelete []uuid.UUID          `json:"blocksToDelete" binding:"optional"`
+	DiaryId        *uuid.UUID           `json:"diaryId"`
+	Name           *string              `json:"name"`
+	Date           *common.DateOnly     `json:"date"`
+	Value          *string              `json:"value"`
+	BlocksToUpsert []DiaryEntryBlockDto `json:"blocksToUpsert"`
+	BlocksToDelete []uuid.UUID          `json:"blocksToDelete"`
 }
 
 type DiaryEntryBlockDto struct {
@@ -63,22 +65,22 @@ type DiaryEntryBlockDto struct {
 }
 
 type GetDiaryEntriesParams struct {
-	DiaryID *uuid.UUID `uri:"diaryID,omitempty" binding:"optional"`
-	Date    *time.Time `uri:"date,omitempty" binding:"optional"`
+	DiaryID *uuid.UUID       `uri:"diaryID,omitempty"`
+	Date    *common.DateOnly `uri:"date,omitempty"`
 }
 
 type ShortDiaryEntryResponse struct {
-	ID      uuid.UUID `json:"Id"`
-	DiaryID uuid.UUID `json:"diaryId"`
-	Name    string    `json:"name"`
-	Date    time.Time `json:"date"`
+	ID      uuid.UUID       `json:"Id"`
+	DiaryID uuid.UUID       `json:"diaryId"`
+	Name    string          `json:"name"`
+	Date    common.DateOnly `json:"date"`
 }
 
 type DiaryEntryResponse struct {
 	ID      uuid.UUID                 `json:"Id"`
 	DiaryID uuid.UUID                 `json:"diaryId"`
 	Name    string                    `json:"name"`
-	Date    time.Time                 `json:"date"`
+	Date    common.DateOnly           `json:"date"`
 	Blocks  []DiaryEntryBlockResponse `json:"blocks"`
 }
 
@@ -90,11 +92,19 @@ type DiaryEntryBlockResponse struct {
 // Errors
 
 type NoAccessToDiaryEntryError struct {
-	DiaryId uuid.UUID
+	EntryID uuid.UUID
 }
 
 func (e *NoAccessToDiaryEntryError) Error() string {
-	return fmt.Sprintf("user does not have access to diary %v", e.DiaryId)
+	return fmt.Sprintf("no access to entry %v", e.EntryID)
+}
+
+type NoAccessToDiaryError struct {
+	DiaryID uuid.UUID
+}
+
+func (e *NoAccessToDiaryError) Error() string {
+	return fmt.Sprintf("no access to diary %v", e.DiaryID)
 }
 
 type AlienEntryBlocksError struct {

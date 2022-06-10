@@ -20,7 +20,7 @@ func RegisterRoutes(
 	authUc usecase.AuthUseCase,
 ) {
 	rg := r.Group("/api/v1")
-	registerAuthRoutes(rg, authUc)
+	registerAuthRoutes(rg, authUc, jwtMw)
 	authRg := rg.Group("")
 	authRg.Use(jwtMw)
 	registerUsersRoutes(authRg, usersUc)
@@ -29,12 +29,12 @@ func RegisterRoutes(
 	registerSharingTasksRoutes(authRg, sharingTasksUc)
 }
 
-func registerAuthRoutes(rg *gin.RouterGroup, uc usecase.AuthUseCase) {
+func registerAuthRoutes(rg *gin.RouterGroup, uc usecase.AuthUseCase, jwtMw gin.HandlerFunc) {
 	authH := auth.New(uc)
 	authRoute := rg.Group("/auth")
 	authRoute.POST("/login", authH.Login())
 	authRoute.POST("/register", authH.Register())
-	authRoute.POST("/refresh-token", authH.RefreshToken())
+	authRoute.POST("/refresh-token", jwtMw, authH.RefreshToken())
 }
 
 func registerUsersRoutes(rg *gin.RouterGroup, uc usecase.UsersUseCase) {
@@ -50,7 +50,7 @@ func registerSharingTasksRoutes(rg *gin.RouterGroup, uc usecase.SharingTasksUseC
 	sharingTasksRoute := rg.Group("/sharing-tasks")
 	sharingTasksRoute.POST("", sharingTasksH.Create())
 	sharingTasksRoute.GET("", sharingTasksH.GetSharingTasks())
-	sharingTasksRoute.POST("/:diaryID/accept", sharingTasksH.AcceptByDiaryID())
+	sharingTasksRoute.POST("/accept", sharingTasksH.AcceptSharedDiary())
 }
 
 func registerDiaryEntriesRoutes(rg *gin.RouterGroup, diaryEntriesUc usecase.DiaryEntriesUseCase) {

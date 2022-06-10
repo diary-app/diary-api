@@ -29,12 +29,12 @@ func (d *UseCase) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (d *UseCase) Create(ctx context.Context, r usecase.CreateDiaryEntryRequest) (*usecase.DiaryEntry, error) {
 	id := uuid.New()
-	date := r.Date
 	entry := &usecase.DiaryEntry{
 		ID:      id,
 		DiaryID: r.DiaryID,
 		Name:    r.Name,
-		Date:    time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC),
+		Date:    time.Time(r.Date),
+		Value:   r.Value,
 		Blocks:  nil,
 	}
 

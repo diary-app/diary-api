@@ -15,7 +15,7 @@ func (h *handler) Create() gin.HandlerFunc {
 			return
 		}
 
-		err := h.uc.CreateSharingTask(c, req)
+		_, err := h.uc.CreateSharingTask(c, req)
 		if err == usecase.ErrUserAlreadyHasAccessToDiary {
 			c.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": "user already has access to the diary"})
 			return

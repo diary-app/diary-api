@@ -23,16 +23,16 @@ func (u *FullUser) String() string {
 type ShortUser struct {
 	ID                  uuid.UUID `json:"id"`
 	Username            string    `json:"username"`
-	PublicKeyForSharing string    `json:"public_key_for_sharing"`
+	PublicKeyForSharing string    `json:"publicKeyForSharing"`
 }
 
 type RegisterRequest struct {
-	Username            string `json:"username" binding:"required"`
-	Password            string `json:"password" binding:"required"`
-	MasterKeySalt       string `json:"masterKeySalt" binding:"required"`
-	PublicKey           string `json:"publicKey" binding:"required"`
-	EncryptedPrivateKey string `json:"encryptedPrivateKey" binding:"required"`
-	EncryptedDiaryKey   string `json:"encryptedDiaryKey" binding:"required"`
+	Username                      string `json:"username" binding:"required"`
+	Password                      string `json:"password" binding:"required"`
+	MasterKeySalt                 string `json:"masterKeySalt" binding:"required"`
+	PublicKeyForSharing           string `json:"publicKeyForSharing" binding:"required"`
+	EncryptedPrivateKeyForSharing string `json:"encryptedPrivateKeyForSharing" binding:"required"`
+	EncryptedDiaryKey             string `json:"encryptedDiaryKey" binding:"required"`
 }
 
 type LoginRequest struct {

@@ -6,7 +6,6 @@ import (
 	"diary-api/internal/db"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
-	"github.com/hashicorp/go-multierror"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -19,8 +18,8 @@ func (p *postgresUsersRepository) CreateUser(
 	const insertUserQuery = `
 INSERT INTO users(username, password_hash, salt_for_keys, public_key_for_sharing, encrypted_private_key_for_sharing) 
 VALUES(:username,:password_hash,:salt_for_keys,:public_key_for_sharing,:encrypted_private_key_for_sharing) 
-RETURNING :userID`
-	const insertDiaryQuery = `INSERT INTO diaries(name, owner_id) VALUES (:id, :owner_id) RETURNING :diaryID`
+RETURNING id`
+	const insertDiaryQuery = `INSERT INTO diaries(name, owner_id) VALUES (:name, :owner_id) RETURNING id`
 	const insertDiaryKeyQuery = `
 INSERT INTO diary_keys(diary_id, user_id, encrypted_key) 
 VALUES (:diary_id, :user_id, :encrypted_key)`
@@ -43,14 +42,11 @@ VALUES (:diary_id, :user_id, :encrypted_key)`
 	diaryKey := diary.Keys[0]
 	diaryKey.UserID = userID
 	diaryKey.DiaryID = diaryID
-	if _, err = tx.ExecContext(ctx, insertDiaryKeyQuery, diaryKey); err != nil {
+	if _, err = tx.NamedExecContext(ctx, insertDiaryKeyQuery, diaryKey); err != nil {
 		return nil, nil, err
 	}
 
-	if err = tx.Commit(); err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			return nil, nil, multierror.Append(err, rbErr)
-		}
+	if err = db.ShouldCommitOrRollback(tx); err != nil {
 		return nil, nil, err
 	}
 

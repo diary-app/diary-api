@@ -46,10 +46,6 @@ func (p *postgresDiaryRepository) CreateDiary(ctx context.Context, diary *usecas
 
 	diary, err = insertDiary(ctx, diary, tx)
 	if err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			return nil, multierror.Append(err, rbErr)
-		}
-
 		pqErr, ok := err.(*pq.Error)
 		if ok && pqErr.Code == db.UniqueViolationErrorCode {
 			return nil, usecase.ErrDuplicateDiaryName
@@ -70,8 +66,8 @@ func (p *postgresDiaryRepository) CreateDiary(ctx context.Context, diary *usecas
 		}
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, multierror.Append(err, commitErr)
+	if err = db.ShouldCommitOrRollback(tx); err != nil {
+		return nil, err
 	}
 	return diary, nil
 }

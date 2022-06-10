@@ -5,20 +5,14 @@ import (
 	"fmt"
 )
 
-type ErrEarlyForTokenRefresh struct {
+type EarlyForTokenRefreshError struct {
 	SecondsBeforeExpire float64
 }
 
-func NewEarlyForTokenRefreshError(secondsUntilExpire float64) ErrEarlyForTokenRefresh {
-	return ErrEarlyForTokenRefresh{
-		secondsUntilExpire,
-	}
-}
-
-func (e ErrEarlyForTokenRefresh) Error() string {
+func (e EarlyForTokenRefreshError) Error() string {
 	return fmt.Sprintf(
-		"too early: token refresh is possible within %v minutes, but token expires in %v seconds",
-		MinutesBeforeExpireToRefresh, e.SecondsBeforeExpire)
+		"too early: token refresh is possible within %v seconds of expiration, but token expires in %v seconds",
+		SecondsBeforeExpireToRefresh.Seconds(), e.SecondsBeforeExpire)
 }
 
 var (

@@ -15,8 +15,8 @@ func (h *handler) RefreshToken() gin.HandlerFunc {
 			c.JSON(http.StatusOK, authResult)
 			return
 		}
-		if earlyErr, ok := err.(*auth.ErrEarlyForTokenRefresh); ok {
-			c.JSON(http.StatusUnauthorized, common.ErrorResponse{Message: earlyErr.Error()})
+		if earlyErr, ok := err.(auth.EarlyForTokenRefreshError); ok {
+			c.JSON(http.StatusBadRequest, common.ErrorResponse{Message: earlyErr.Error()})
 			return
 		}
 

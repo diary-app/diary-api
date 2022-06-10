@@ -89,9 +89,6 @@ func TestUseCase_Delete(t *testing.T) {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("Delete() got = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }

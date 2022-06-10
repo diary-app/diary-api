@@ -25,6 +25,6 @@ func (h *handler) GetByID() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, diaryEntry)
+		c.JSON(http.StatusOK, mapToEntryResponse(diaryEntry))
 	}
 }

@@ -53,7 +53,7 @@ paths:
         401:
           $ref: '#/components/responses/UnauthorizedResponse'
       security: []
-  /v1/auth/refresh:
+  /v1/auth/refresh-token:
     post:
       description: Refresh existing auth token within 5 minutes until its expiration
       tags:
@@ -77,7 +77,7 @@ paths:
           $ref: '#/components/responses/BadRequestResponse'
         401:
           $ref: '#/components/responses/UnauthorizedResponse'
-  /v1/users/{name}:
+  /v1/users/name={name}:
     get:
       description: Get public info about current user
       tags:
@@ -145,7 +145,7 @@ paths:
           $ref: '#/components/responses/BadRequestResponse'
         401:
           $ref: '#/components/responses/UnauthorizedResponse'
-  /v1/diary-entires/{id}:
+  /v1/diary-entries/{id}:
     get:
       description: Get diary entry
       tags:
@@ -259,10 +259,10 @@ components:
         masterKeySalt:
           type: string
           required: true
-        publicKey:
+        publicKeyForSharing:
           type: string
           required: true
-        encryptedPrivateKey:
+        encryptedPrivateKeyForSharing:
           type: string
           required: true
         encryptedDiaryKey:
@@ -302,7 +302,7 @@ components:
             masterKeySalt:
               type: string
               required: true
-            encryptedPrivateKey:
+            encryptedPrivateKeyForSharing:
               type: string
               required: true
     ShortUser:
@@ -315,7 +315,7 @@ components:
         username:
           type: string
           required: true
-        publicKey:
+        publicKeyForSharing:
           type: string
           required: true
     ErrorBody:
@@ -331,6 +331,11 @@ components:
           type: string
           format: uuid
         name:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        key:
           type: string
     DiariesList:
       type: array
@@ -385,7 +390,7 @@ components:
         encryptedDiaryKey:
           type: string
           description: Diary key encrypted with public key of receiving user
-        shatedAt:
+        sharedAt:
           type: string
           format: date
 
@@ -411,6 +416,7 @@ components:
             properties:
               diaryId:
                 type: string
+                format: uuid
                 required: true
               name:
                 type: string
@@ -429,6 +435,10 @@ components:
           schema:
             type: object
             properties:
+              diaryId:
+                type: string
+                format: uuid
+                required: false
               name:
                 type: string
                 required: false
@@ -535,15 +545,21 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DiariesList'
+            type: object
+            properties:
+              items:
+                $ref: '#/components/schemas/DiariesList'
     DiaryEntriesResponse:
       description: Successfully received diary entries with given filters
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/ShortDiaryEntry'
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShortDiaryEntry'
     GetDiaryEntryResponse:
       description: Got diary entry
       content:
@@ -567,9 +583,12 @@ components:
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/SharingTask'
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SharingTask'
 
   securitySchemes:
     BearerAuth:

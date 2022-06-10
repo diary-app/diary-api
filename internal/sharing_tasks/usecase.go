@@ -10,22 +10,19 @@ type sharingTasksUseCase struct {
 	repo usecase.SharingTasksRepository
 }
 
-func (uc *sharingTasksUseCase) CreateSharingTask(ctx context.Context, req *usecase.NewSharingTaskRequest) error {
-	st := &usecase.SharingTask{
-		DiaryID:           req.DiaryID,
-		ReceiverUserID:    req.ReceiverUserID,
-		EncryptedDiaryKey: req.EncryptedDiaryKey,
-		SharedAt:          req.SharedAt,
-	}
-	return uc.repo.CreateSharingTask(ctx, st)
+func (uc *sharingTasksUseCase) CreateSharingTask(
+	ctx context.Context,
+	req *usecase.NewSharingTaskRequest,
+) (*usecase.SharingTask, error) {
+	return uc.repo.CreateSharingTask(ctx, req)
 }
 
 func (uc *sharingTasksUseCase) GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]usecase.SharingTask, error) {
 	return uc.repo.GetSharingTasks(ctx, userID)
 }
 
-func (uc *sharingTasksUseCase) DeleteSharingTask(ctx context.Context, diaryID uuid.UUID, receiverID uuid.UUID) error {
-	return uc.repo.DeleteSharingTask(ctx, diaryID, receiverID)
+func (uc *sharingTasksUseCase) AcceptSharingTask(ctx context.Context, req *usecase.AcceptSharingTaskRequest) error {
+	return uc.repo.AcceptSharingTask(ctx, nil)
 }
 
 func NewUseCase(repo usecase.SharingTasksRepository) usecase.SharingTasksUseCase {

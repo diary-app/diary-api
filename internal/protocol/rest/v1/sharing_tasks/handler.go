@@ -8,7 +8,7 @@ import (
 type Handler interface {
 	Create() gin.HandlerFunc
 	GetSharingTasks() gin.HandlerFunc
-	AcceptByDiaryID() gin.HandlerFunc
+	AcceptSharedDiary() gin.HandlerFunc
 }
 
 func New(uc usecase.SharingTasksUseCase) Handler {

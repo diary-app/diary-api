@@ -62,29 +62,12 @@ func (p *pgRepo) GetEntries(ctx context.Context, r usecase.GetDiaryEntriesParams
 	return ucEntries, nil
 }
 
-func checkAccess(ctx context.Context, tx db.TxOrDb, entryID uuid.UUID) error {
-	const checkAccessQuery = `SELECT EXISTS(
-    	SELECT * FROM diary_entries e JOIN diaries d ON e.diary_id = d.id JOIN diary_keys dk ON d.id = dk.diary_id 
-		WHERE e.id = $1 AND dk.user_id = $2)`
-
-	userID := auth.MustGetUserID(ctx)
-	var hasAccess bool
-	if err := tx.QueryRowxContext(ctx, checkAccessQuery, entryID, userID).Scan(&hasAccess); err != nil {
-		return err
-	}
-	if !hasAccess {
-		return &usecase.NoAccessToDiaryEntryError{DiaryId: entryID}
-	}
-
-	return nil
-}
-
 func (p *pgRepo) GetByID(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry, error) {
 	tx, err := p.db.Beginx()
 	if err != nil {
 		return nil, err
 	}
-	err = checkAccess(ctx, tx, id)
+	err = db.CheckMyAccessToEntry(ctx, tx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +79,7 @@ func (p *pgRepo) GetByID(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry
 
 	const blocksQuery = `SELECT id, diary_entry_id, value FROM diary_entry_blocks WHERE diary_entry_id = $1`
 	var blocks []diaryEntryBlock
-	if err := p.db.SelectContext(ctx, blocks, blocksQuery, id); err != nil {
+	if err := p.db.SelectContext(ctx, &blocks, blocksQuery, id); err != nil {
 		return nil, err
 	}
 
@@ -144,11 +127,11 @@ func (p *pgRepo) Update(ctx context.Context, id uuid.UUID, r *usecase.UpdateDiar
 		}
 		return err
 	}
-	return nil
+	return db.ShouldCommitOrRollback(tx)
 }
 
 func validateUpdateRequest(ctx context.Context, tx db.TxOrDb, id uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error {
-	err := checkAccess(ctx, tx, id)
+	err := db.CheckMyAccessToEntry(ctx, tx, id)
 	if err != nil {
 		return err
 	}
@@ -189,7 +172,7 @@ func updateEntry(ctx context.Context, tx db.TxOrDb, id uuid.UUID, req *usecase.U
 		return err
 	}
 	if req.DiaryId != nil {
-		if err := checkAccess(ctx, tx, *req.DiaryId); err != nil {
+		if err := db.CheckMyAccessToEntry(ctx, tx, *req.DiaryId); err != nil {
 			return err
 		}
 		entry.DiaryID = *req.DiaryId
@@ -198,7 +181,7 @@ func updateEntry(ctx context.Context, tx db.TxOrDb, id uuid.UUID, req *usecase.U
 		entry.Name = *req.Name
 	}
 	if req.Date != nil {
-		entry.Date = *req.Date
+		entry.Date = time.Time(*req.Date)
 	}
 	if req.Value != nil {
 		entry.Value = *req.Value
@@ -286,14 +269,14 @@ func (p *pgRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if err := checkAccess(ctx, tx, id); err != nil {
+	if err := db.CheckMyAccessToEntry(ctx, tx, id); err != nil {
 		return err
 	}
 	const query = `DELETE FROM diary_entries WHERE id = $1`
 	if _, err := tx.ExecContext(ctx, query, id); err != nil {
 		return err
 	}
-	return nil
+	return db.ShouldCommitOrRollback(tx)
 }
 
 func New(db *sqlx.DB) usecase.DiaryEntriesRepository {
@@ -303,11 +286,24 @@ func New(db *sqlx.DB) usecase.DiaryEntriesRepository {
 }
 
 func (p *pgRepo) Create(ctx context.Context, entry *usecase.DiaryEntry) (*usecase.DiaryEntry, error) {
-	const insertEntryQuery = `INSERT INTO diary_entries (id, diary_id, name, date) VALUES (:id, :diary_id, :name, :date)`
-	if _, err := p.db.NamedExecContext(ctx, insertEntryQuery, entry); err != nil {
+	tx, err := p.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	if err = db.CheckMyAccessToDiaryContext(ctx, tx, entry.DiaryID); err != nil {
 		return nil, err
 	}
 
+	const insertEntryQuery = `
+INSERT INTO diary_entries (id, diary_id, name, date, value) VALUES (:id, :diary_id, :name, :date, :value)`
+
+	if _, err = tx.NamedExecContext(ctx, insertEntryQuery, entry); err != nil {
+		return nil, err
+	}
+
+	if err = db.ShouldCommitOrRollback(tx); err != nil {
+		return nil, err
+	}
 	return entry, nil
 }
 

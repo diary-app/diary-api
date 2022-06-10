@@ -4,6 +4,7 @@ import (
 	"context"
 	"diary-api/internal/config"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"os"
@@ -32,6 +33,16 @@ func GetNamedContext(tx *sqlx.Tx, ctx context.Context, dest interface{}, query s
 	}
 	if err = tx.GetContext(ctx, dest, query, args...); err != nil {
 		return err
+	}
+	return nil
+}
+
+func ShouldCommitOrRollback(tx Tx) error {
+	if commitErr := tx.Commit(); commitErr != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return multierror.Append(commitErr, rbErr)
+		}
+		return commitErr
 	}
 	return nil
 }

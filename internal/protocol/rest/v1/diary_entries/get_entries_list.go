@@ -20,6 +20,19 @@ func (h *handler) GetEntries() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, entries)
+		shortDiaries := mapShortEntryResponseList(entries)
+		c.JSON(http.StatusOK, DiaryEntriesResponse{Items: shortDiaries})
 	}
+}
+
+type DiaryEntriesResponse struct {
+	Items []usecase.ShortDiaryEntryResponse `json:"items"`
+}
+
+func mapShortEntryResponseList(entries []usecase.DiaryEntry) []usecase.ShortDiaryEntryResponse {
+	response := make([]usecase.ShortDiaryEntryResponse, len(entries))
+	for i, e := range entries {
+		response[i] = mapToShortEntry(&e)
+	}
+	return response
 }
