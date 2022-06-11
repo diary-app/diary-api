@@ -86,6 +86,8 @@ paths:
         - name: name
           in: path
           description: Name of the user whose info is requested
+          schema:
+            type: string
       responses:
         200:
           $ref: '#/components/responses/ShortUserResponse'
@@ -155,6 +157,9 @@ paths:
           in: path
           description: ID of entry to get
           required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         200:
           $ref: '#/components/responses/GetDiaryEntryResponse'
@@ -171,6 +176,9 @@ paths:
           in: path
           description: ID of the entry to update
           required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         $ref: '#/components/requestBodies/UpdateDiaryEntryRequestBody'
       responses:
@@ -191,6 +199,9 @@ paths:
           in: path
           description: ID of the entry to update
           required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         204:
           description: Deleted diary entry
@@ -249,6 +260,9 @@ components:
   schemas:
     RegisterRequest:
       type: object
+      required: [
+        "username", "password", "masterKeySalt", "publicKeyForSharing",
+        "encryptedPrivateKeyForSharing", "encryptedDiaryKey"]
       properties:
         username:
           type: string
@@ -270,6 +284,7 @@ components:
           required: true
     LoginRequest:
       type: object
+      required: ["username", "password"]
       properties:
         username:
           type: string
@@ -279,6 +294,7 @@ components:
           required: true
     RegistrationResult:
       type: object
+      required: ["token", "diaryId"]
       properties:
         token:
           type: string
@@ -287,13 +303,16 @@ components:
           description: ID of new diary crated for the registered user
           type: string
           format: uuid
+          required: true
     AuthResult:
+      required: ["token"]
       type: object
       properties:
         token:
           type: string
           required: true
     FullUser:
+      required: ["masterKeySalt", "encryptedPrivateKeyForSharing"]
       type: object
       allOf:
         - $ref: '#/components/schemas/ShortUser'
@@ -307,6 +326,7 @@ components:
               required: true
     ShortUser:
       type: object
+      required: ["id", "username", "publicKeyForSharing"]
       properties:
         id:
           type: string
@@ -320,12 +340,14 @@ components:
           required: true
     ErrorBody:
       type: object
+      required: ["message"]
       properties:
         message:
           type: string
           required: true
     DiaryBody:
       type: object
+      required: ["id", "name", "ownerId", "key"]
       properties:
         id:
           type: string
@@ -338,12 +360,16 @@ components:
         key:
           type: string
     DiariesList:
-      type: array
-      items:
-        $ref: '#/components/schemas/DiaryBody'
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiaryBody'
 
     ShortDiaryEntry:
       type: object
+      required: ["id", "diaryId", "name", "date"]
       properties:
         id:
           type: string
@@ -356,8 +382,16 @@ components:
         date:
           type: string
           format: date
+    ShortDiariesEntriesList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShortDiaryEntry'
     FullDiaryEntry:
       type: object
+      required: ["value", "blocks"]
       allOf:
         - $ref: '#/components/schemas/ShortDiaryEntry'
         - type: object
@@ -370,6 +404,7 @@ components:
                 $ref: '#/components/schemas/DiaryEntryBlock'
     DiaryEntryBlock:
       type: object
+      required: ["id", "value"]
       properties:
         id:
           type: string
@@ -378,6 +413,7 @@ components:
           type: string
     SharingTask:
       type: object
+      required: ["diaryId", "receiverUserId", "encryptedDiaryKey", "sharedAt"]
       properties:
         diaryId:
           type: string
@@ -393,6 +429,100 @@ components:
         sharedAt:
           type: string
           format: date-time
+    AvailableSharingTasksList:
+      type: object
+      required: ["items"]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SharingTask'
+    CreateDiaryEntryRequest:
+      type: object
+      required: ["diaryId", "name", "date", "value"]
+      properties:
+        diaryId:
+          type: string
+          format: uuid
+          required: true
+        name:
+          type: string
+          required: true
+        date:
+          type: string
+          format: date
+          required: true
+        value:
+          type: string
+          required: true
+    UpdateDiaryEntryRequest:
+      type: object
+      required: []
+      properties:
+        diaryId:
+          type: string
+          format: uuid
+          required: false
+        name:
+          type: string
+          required: false
+        date:
+          type: string
+          format: date
+          required: false
+        blocksToUpsert:
+          type: array
+          required: false
+          items:
+            $ref: '#/components/schemas/DiaryEntryBlock'
+        blocksToDelete:
+          type: array
+          items:
+            type: string
+            format: uuid
+    CreateSharingTaskRequest:
+      required: ["entryId", "myEncryptedKey", "receiverEncryptedKey", "receiverUserId", "blocks"]
+      type: object
+      properties:
+        entryId:
+          type: string
+          format: uuid
+          description: ID of diary entry to share
+        myEncryptedKey:
+          type: string
+          required: true
+          description:
+            New encryption key with which entry contents were encrypted.
+            The key is encrypted with current user's master-key
+        receiverEncryptedKey:
+          type: string
+          required: true
+          description:
+            New encryption key with which entry contents were encrypted.
+            The key is encrypted with receiver user's public key
+        receiverUserId:
+          type: string
+          format: uuid
+          required: true
+        blocks:
+          type: array
+          required: true
+          description: Block of the entry being shared, encrypted with new encryption key
+          items:
+            $ref: '#/components/schemas/DiaryEntryBlock'
+    AcceptSharedDiaryRequest:
+      type: object
+      required: ["diaryId", "encryptedDiaryKey"]
+      properties:
+        diaryId:
+          type: string
+          format: uuid
+          required: true
+          description: ID of shared diary which current user accepts
+        encryptedDiaryKey:
+          type: string
+          required: true
+          description: Diary key encrypted with current user's master-key
 
   requestBodies:
     RegisterRequestBody:
@@ -412,101 +542,25 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              diaryId:
-                type: string
-                format: uuid
-                required: true
-              name:
-                type: string
-                required: true
-              date:
-                type: string
-                format: date
-                required: true
-              value:
-                type: string
-                required: true
+            $ref: '#/components/schemas/CreateDiaryEntryRequest'
     UpdateDiaryEntryRequestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              diaryId:
-                type: string
-                format: uuid
-                required: false
-              name:
-                type: string
-                required: false
-              date:
-                type: string
-                format: date
-                required: false
-              blocksToUpsert:
-                type: array
-                required: false
-                items:
-                  $ref: '#/components/schemas/DiaryEntryBlock'
-              blocksToDelete:
-                type: array
-                items:
-                  type: string
-                  format: uuid
+            $ref: '#/components/schemas/UpdateDiaryEntryRequest'
     CreateSharingTaskRequestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              entryId:
-                type: string
-                format: uuid
-                description: ID of diary entry to share
-              myEncryptedKey:
-                type: string
-                required: true
-                description:
-                  New encryption key with which entry contents were encrypted. 
-                  The key is encrypted with current user's master-key
-              receiverEncryptedKey:
-                type: string
-                required: true
-                description:
-                  New encryption key with which entry contents were encrypted.
-                  The key is encrypted with receiver user's public key
-              receiverUserId:
-                type: string
-                format: uuid
-                required: true
-              blocks:
-                type: array
-                required: true
-                description: Block of the entry being shared, encrypted with new encryption key
-                items:
-                  $ref: '#/components/schemas/DiaryEntryBlock'
+            $ref: '#/components/schemas/CreateSharingTaskRequest'
     AcceptSharedDiaryRequestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              diaryId:
-                type: string
-                format: uuid
-                required: true
-                description: ID of shared diary which current user accepts
-              encryptedDiaryKey:
-                type: string
-                required: true
-                description: Diary key encrypted with current user's master-key
-
-
+            $ref: '#/components/schemas/AcceptSharedDiaryRequest'
 
   responses:
     BadRequestResponse:
@@ -550,21 +604,13 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              items:
-                $ref: '#/components/schemas/DiariesList'
+            $ref: '#/components/schemas/DiariesList'
     DiaryEntriesResponse:
       description: Successfully received diary entries with given filters
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ShortDiaryEntry'
+            $ref: '#/components/schemas/ShortDiariesEntriesList'
     GetDiaryEntryResponse:
       description: Got diary entry
       content:
@@ -588,12 +634,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SharingTask'
+            $ref: '#/components/schemas/AvailableSharingTasksList'
 
   securitySchemes:
     BearerAuth:
