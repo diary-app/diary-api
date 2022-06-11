@@ -22,7 +22,7 @@ func (uc *sharingTasksUseCase) GetSharingTasks(ctx context.Context, userID uuid.
 }
 
 func (uc *sharingTasksUseCase) AcceptSharingTask(ctx context.Context, req *usecase.AcceptSharingTaskRequest) error {
-	return uc.repo.AcceptSharingTask(ctx, nil)
+	return uc.repo.AcceptSharingTask(ctx, req)
 }
 
 func NewUseCase(repo usecase.SharingTasksRepository) usecase.SharingTasksUseCase {

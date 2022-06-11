@@ -247,24 +247,27 @@ func (r *pgSharingTasksRepo) AcceptSharingTask(ctx context.Context, req *usecase
 		WHERE diary_id = $1 AND receiver_user_id = $2)`
 	var taskExists bool
 	if err = tx.QueryRowxContext(ctx, checkTaskQuery, req.DiaryID, userID).Scan(&taskExists); err != nil {
-		return err
+		return db.ShouldRollback(tx, err)
 	}
 	if !taskExists {
-		return usecase.ErrCommonNotFound
+		return db.ShouldRollback(tx, usecase.ErrCommonNotFound)
 	}
 
 	//language=postgresql
 	const insertKeyQuery = `
 	INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES ($1, $2, $3)`
 	if _, err = tx.ExecContext(ctx, insertKeyQuery, req.DiaryID, userID, req.EncryptedDiaryKey); err != nil {
-		return err
+		return db.ShouldRollback(tx, err)
 	}
 
 	//language=postgresql
 	const query = `
 	DELETE FROM sharing_tasks WHERE diary_id = $1 AND receiver_user_id = $2`
+	if _, err = tx.ExecContext(ctx, query, req.DiaryID, userID); err != nil {
+		return db.ShouldRollback(tx, err)
+	}
 
-	if _, err = r.db.ExecContext(ctx, query, req.DiaryID, userID); err != nil {
+	if err = db.ShouldCommitOrRollback(tx); err != nil {
 		return err
 	}
 
