@@ -18,10 +18,9 @@ func (h *handler) GetUserByID() gin.HandlerFunc {
 		if err != nil {
 			if err == usecase.ErrUserNotFound {
 				c.AbortWithStatus(http.StatusNotFound)
-				return
+			} else {
+				_ = c.AbortWithError(http.StatusInternalServerError, err)
 			}
-
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 

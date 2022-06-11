@@ -27,6 +27,7 @@ type SharingTask struct {
 	DiaryID           uuid.UUID `json:"diaryId" db:"diary_id"`
 	ReceiverUserID    uuid.UUID `json:"receiverUserId" db:"receiver_user_id"`
 	EncryptedDiaryKey string    `json:"encryptedDiaryKey" db:"encrypted_diary_key"`
+	Username          string    `json:"username" db:"username"`
 	SharedAt          time.Time `json:"sharedAt" db:"shared_at"`
 }
 
@@ -37,6 +38,7 @@ type CreateSharingTaskRequest struct {
 	ReceiverUserID       uuid.UUID            `json:"receiverUserId" binding:"required"`
 	MyEncryptedKey       string               `json:"myEncryptedKey" binding:"required"`
 	ReceiverEncryptedKey string               `json:"receiverEncryptedKey" binding:"required"`
+	Value                string               `json:"value" binding:"required"`
 	Blocks               []DiaryEntryBlockDto `json:"blocks" binding:"required,dive"`
 }
 

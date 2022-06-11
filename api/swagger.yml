@@ -77,6 +77,28 @@ paths:
           $ref: '#/components/responses/BadRequestResponse'
         401:
           $ref: '#/components/responses/UnauthorizedResponse'
+  /v1/users/{id}:
+    get:
+      description: Get public info about user by their ID
+      tags:
+        - users
+      parameters:
+        - name: id
+          in: path
+          description: ID of the user whose info is requested
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          $ref: '#/components/responses/ShortUserResponse'
+        400:
+          $ref: '#/components/responses/BadRequestResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedResponse'
+        404:
+          description: User with given name was not found
   /v1/users/name={name}:
     get:
       description: Get public info about current user
@@ -229,16 +251,7 @@ paths:
         $ref: '#/components/requestBodies/CreateSharingTaskRequestBody'
       responses:
         200:
-          description: Entry was successfully shared
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  diaryId:
-                    type: string
-                    format: uuid
-                    description: ID of new diary which now contains the shared entry
+          $ref: '#/components/responses/CreateSharingTaskResponse'
   /v1/sharing-tasks/accept:
     post:
       description: Accept shared diary key
@@ -320,13 +333,13 @@ components:
         token:
           type: string
           required: true
-    FullUser:
+    FullUserDto:
       required:
         - masterKeySalt
         - encryptedPrivateKeyForSharing
       type: object
       allOf:
-        - $ref: '#/components/schemas/ShortUser'
+        - $ref: '#/components/schemas/ShortUserDto'
         - type: object
           properties:
             masterKeySalt:
@@ -335,7 +348,7 @@ components:
             encryptedPrivateKeyForSharing:
               type: string
               required: true
-    ShortUser:
+    ShortUserDto:
       type: object
       required:
         - id
@@ -352,7 +365,7 @@ components:
         publicKeyForSharing:
           type: string
           required: true
-    ErrorBody:
+    ErrorDto:
       type: object
       required:
         - message
@@ -360,7 +373,7 @@ components:
         message:
           type: string
           required: true
-    DiaryBody:
+    DiaryDto:
       type: object
       required:
         - id
@@ -378,7 +391,7 @@ components:
           format: uuid
         key:
           type: string
-    DiariesList:
+    DiariesListDto:
       type: object
       required:
         - items
@@ -386,9 +399,9 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/DiaryBody'
+            $ref: '#/components/schemas/DiaryDto'
 
-    ShortDiaryEntry:
+    ShortDiaryEntryDto:
       type: object
       required:
         - id
@@ -407,20 +420,22 @@ components:
         date:
           type: string
           format: date
-    ShortDiariesEntriesList:
+    ShortDiariesEntriesListDto:
       type: object
+      required:
+        - items
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ShortDiaryEntry'
-    FullDiaryEntry:
+            $ref: '#/components/schemas/ShortDiaryEntryDto'
+    FullDiaryEntryDto:
       type: object
       required:
         - value
         - blocks
       allOf:
-        - $ref: '#/components/schemas/ShortDiaryEntry'
+        - $ref: '#/components/schemas/ShortDiaryEntryDto'
         - type: object
           properties:
             value:
@@ -428,8 +443,8 @@ components:
             blocks:
               type: array
               items:
-                $ref: '#/components/schemas/DiaryEntryBlock'
-    DiaryEntryBlock:
+                $ref: '#/components/schemas/DiaryEntryBlockDto'
+    DiaryEntryBlockDto:
       type: object
       required:
         - id
@@ -440,12 +455,13 @@ components:
           format: uuid
         value:
           type: string
-    SharingTask:
+    SharingTaskDto:
       type: object
       required:
         - diaryId
         - receiverUserId
         - encryptedDiaryKey
+        - username
         - sharedAt
       properties:
         diaryId:
@@ -459,10 +475,13 @@ components:
         encryptedDiaryKey:
           type: string
           description: Diary key encrypted with public key of receiving user
+        username:
+          type: string
+          description: Name of the user who owns the shared diary
         sharedAt:
           type: string
           format: date-time
-    AvailableSharingTasksList:
+    AvailableSharingTasksListDto:
       type: object
       required:
         - items
@@ -470,7 +489,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SharingTask'
+            $ref: '#/components/schemas/SharingTaskDto'
     CreateDiaryEntryRequest:
       type: object
       required:
@@ -507,11 +526,13 @@ components:
           type: string
           format: date
           required: false
+        value:
+          type: string
         blocksToUpsert:
           type: array
           required: false
           items:
-            $ref: '#/components/schemas/DiaryEntryBlock'
+            $ref: '#/components/schemas/DiaryEntryBlockDto'
         blocksToDelete:
           type: array
           items:
@@ -523,6 +544,7 @@ components:
         - myEncryptedKey
         - receiverEncryptedKey
         - receiverUserId
+        - value
         - blocks
       type: object
       properties:
@@ -546,12 +568,25 @@ components:
           type: string
           format: uuid
           required: true
+        value:
+          type: string
+          required: true
+          description: Value of the entry encrypted with new encryption key
         blocks:
           type: array
           required: true
           description: Block of the entry being shared, encrypted with new encryption key
           items:
-            $ref: '#/components/schemas/DiaryEntryBlock'
+            $ref: '#/components/schemas/DiaryEntryBlockDto'
+    CreateSharingTaskResponseDto:
+      type: object
+      required:
+        - diaryId
+      properties:
+        diaryId:
+          type: string
+          format: uuid
+          description: ID of new diary which now contains the shared entry
     AcceptSharedDiaryRequest:
       type: object
       required:
@@ -612,13 +647,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorBody'
+            $ref: '#/components/schemas/ErrorDto'
     UnauthorizedResponse:
       description: Unauthorized, auth token is missing or invalid
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorBody'
+            $ref: '#/components/schemas/ErrorDto'
     RegistrationResponse:
       description: Successful registration
       content:
@@ -636,49 +671,55 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/FullUser'
+            $ref: '#/components/schemas/FullUserDto'
     ShortUserResponse:
       description: Successfully received user info
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ShortUser'
+            $ref: '#/components/schemas/ShortUserDto'
     DiariesResponse:
       description: Successfully received available diaries
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/DiariesList'
+            $ref: '#/components/schemas/DiariesListDto'
     DiaryEntriesResponse:
       description: Successfully received diary entries with given filters
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ShortDiariesEntriesList'
+            $ref: '#/components/schemas/ShortDiariesEntriesListDto'
     GetDiaryEntryResponse:
       description: Got diary entry
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/FullDiaryEntry'
+            $ref: '#/components/schemas/FullDiaryEntryDto'
     CreateDiaryEntryResponse:
       description: Created diary entry
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ShortDiaryEntry'
+            $ref: '#/components/schemas/ShortDiaryEntryDto'
     UpdateDiaryEntryResponse:
       description: Updated diary entry
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ShortDiaryEntry'
+            $ref: '#/components/schemas/ShortDiaryEntryDto'
+    CreateSharingTaskResponse:
+      description: Entry was successfully shared
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateSharingTaskResponseDto'
     AvailableSharingTasksResponse:
       description: Received available sharing tasks
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AvailableSharingTasksList'
+            $ref: '#/components/schemas/AvailableSharingTasksListDto'
 
   securitySchemes:
     BearerAuth:

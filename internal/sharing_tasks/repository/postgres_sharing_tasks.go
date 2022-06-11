@@ -44,7 +44,7 @@ func (r *pgSharingTasksRepo) CreateSharingTask(
 		return nil, db.ShouldRollback(tx, err)
 	}
 
-	newDiaryID, err := moveEntryToNewDiary(ctx, tx, req.ReceiverUserID, req.EntryID, req.MyEncryptedKey)
+	newDiaryID, err := moveEntryToNewDiary(ctx, tx, req)
 	if err != nil {
 		return nil, db.ShouldRollback(tx, err)
 	}
@@ -138,9 +138,7 @@ type diaryEntryBlock struct {
 func moveEntryToNewDiary(
 	ctx context.Context,
 	tx db.TxOrDb,
-	receiverID uuid.UUID,
-	entryID uuid.UUID,
-	myEncryptedKey string,
+	req *usecase.CreateSharingTaskRequest,
 ) (uuid.UUID, error) {
 
 	userID := auth.MustGetUserID(ctx)
@@ -148,7 +146,7 @@ func moveEntryToNewDiary(
 	if err != nil {
 		return uuid.UUID{}, nil
 	}
-	receiver, err := getUser(ctx, tx, receiverID)
+	receiver, err := getUser(ctx, tx, req.ReceiverUserID)
 	if err == sql.ErrNoRows {
 		return uuid.UUID{}, usecase.ErrReceiverUserNotFound
 	}
@@ -171,13 +169,13 @@ INSERT INTO diaries (id, name, owner_id) VALUES (:id, :name, :owner_id)`
 
 	//language=postgresql
 	const createDiaryKeyQuery = `INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES ($1, $2, $3)`
-	if _, err = tx.ExecContext(ctx, createDiaryKeyQuery, newDiaryID, userID, myEncryptedKey); err != nil {
+	if _, err = tx.ExecContext(ctx, createDiaryKeyQuery, newDiaryID, userID, req.MyEncryptedKey, req.Value); err != nil {
 		return uuid.UUID{}, err
 	}
 
 	//language=postgresql
-	const moveEntryQuery = `UPDATE diary_entries SET diary_id = $2 WHERE id = $1`
-	if _, err = tx.ExecContext(ctx, moveEntryQuery, entryID, newDiaryID); err != nil {
+	const moveEntryQuery = `UPDATE diary_entries SET diary_id = $2, value = $3 WHERE id = $1`
+	if _, err = tx.ExecContext(ctx, moveEntryQuery, req.EntryID, newDiaryID); err != nil {
 		return uuid.UUID{}, err
 	}
 
@@ -225,7 +223,11 @@ VALUES (:diary_id, :receiver_user_id, :encrypted_diary_key, :shared_at)`
 func (r *pgSharingTasksRepo) GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]usecase.SharingTask, error) {
 	//language=postgresql
 	const query = `
-SELECT diary_id, receiver_user_id, encrypted_diary_key, shared_at FROM sharing_tasks WHERE receiver_user_id = $1`
+SELECT st.diary_id, st.receiver_user_id, st.encrypted_diary_key, st.shared_at, u.username
+FROM sharing_tasks st
+JOIN diaries d ON st.diary_id = d.id
+JOIN users u ON d.owner_id = u.id
+WHERE receiver_user_id = $1`
 	tasksArr := make([]usecase.SharingTask, 0)
 	if err := r.db.SelectContext(ctx, &tasksArr, query, userID); err != nil {
 		return nil, err

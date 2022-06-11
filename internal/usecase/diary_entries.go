@@ -75,7 +75,7 @@ type GetDiaryEntriesParams struct {
 }
 
 type ShortDiaryEntryResponse struct {
-	ID      uuid.UUID       `json:"Id"`
+	ID      uuid.UUID       `json:"id"`
 	DiaryID uuid.UUID       `json:"diaryId"`
 	Name    string          `json:"name"`
 	Date    common.DateOnly `json:"date"`
