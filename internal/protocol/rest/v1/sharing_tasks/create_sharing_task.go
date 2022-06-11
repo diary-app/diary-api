@@ -10,7 +10,7 @@ import (
 
 func (h *handler) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		req := &usecase.NewSharingTaskRequest{}
+		req := &usecase.CreateSharingTaskRequest{}
 		if err := c.ShouldBindJSON(req); err != nil {
 			utils.RespondInvalidBodyJSONWithError(c, err)
 			return
@@ -18,7 +18,7 @@ func (h *handler) Create() gin.HandlerFunc {
 
 		task, err := h.uc.CreateSharingTask(c, req)
 		if err == nil {
-			c.JSON(http.StatusOK, usecase.NewSharingTaskResponse{DiaryID: task.DiaryID})
+			c.JSON(http.StatusOK, usecase.CreateSharingTaskResponse{DiaryID: task.DiaryID})
 			return
 		}
 

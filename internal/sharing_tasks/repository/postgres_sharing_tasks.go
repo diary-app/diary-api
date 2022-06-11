@@ -20,7 +20,7 @@ type pgSharingTasksRepo struct {
 
 func (r *pgSharingTasksRepo) CreateSharingTask(
 	ctx context.Context,
-	req *usecase.NewSharingTaskRequest,
+	req *usecase.CreateSharingTaskRequest,
 ) (*usecase.SharingTask, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
@@ -198,7 +198,7 @@ func getUser(ctx context.Context, tx db.TxOrDb, id uuid.UUID) (*usecase.FullUser
 func (r *pgSharingTasksRepo) createSharingTask(
 	ctx context.Context,
 	tx db.TxOrDb,
-	req *usecase.NewSharingTaskRequest,
+	req *usecase.CreateSharingTaskRequest,
 	newDiaryID uuid.UUID,
 ) (*usecase.SharingTask, error) {
 

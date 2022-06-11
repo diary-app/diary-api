@@ -260,9 +260,13 @@ components:
   schemas:
     RegisterRequest:
       type: object
-      required: [
-        "username", "password", "masterKeySalt", "publicKeyForSharing",
-        "encryptedPrivateKeyForSharing", "encryptedDiaryKey"]
+      required:
+        - username
+        - password
+        - masterKeySalt
+        - publicKeyForSharing
+        - encryptedPrivateKeyForSharing
+        - encryptedDiaryKey
       properties:
         username:
           type: string
@@ -284,7 +288,9 @@ components:
           required: true
     LoginRequest:
       type: object
-      required: ["username", "password"]
+      required:
+        - username
+        - password
       properties:
         username:
           type: string
@@ -294,7 +300,9 @@ components:
           required: true
     RegistrationResult:
       type: object
-      required: ["token", "diaryId"]
+      required:
+        - token
+        - diaryId
       properties:
         token:
           type: string
@@ -305,14 +313,17 @@ components:
           format: uuid
           required: true
     AuthResult:
-      required: ["token"]
+      required:
+        - token
       type: object
       properties:
         token:
           type: string
           required: true
     FullUser:
-      required: ["masterKeySalt", "encryptedPrivateKeyForSharing"]
+      required:
+        - masterKeySalt
+        - encryptedPrivateKeyForSharing
       type: object
       allOf:
         - $ref: '#/components/schemas/ShortUser'
@@ -326,7 +337,10 @@ components:
               required: true
     ShortUser:
       type: object
-      required: ["id", "username", "publicKeyForSharing"]
+      required:
+        - id
+        - username
+        - publicKeyForSharing
       properties:
         id:
           type: string
@@ -340,14 +354,19 @@ components:
           required: true
     ErrorBody:
       type: object
-      required: ["message"]
+      required:
+        - message
       properties:
         message:
           type: string
           required: true
     DiaryBody:
       type: object
-      required: ["id", "name", "ownerId", "key"]
+      required:
+        - id
+        - name
+        - ownerId
+        - key
       properties:
         id:
           type: string
@@ -361,6 +380,8 @@ components:
           type: string
     DiariesList:
       type: object
+      required:
+        - items
       properties:
         items:
           type: array
@@ -369,7 +390,11 @@ components:
 
     ShortDiaryEntry:
       type: object
-      required: ["id", "diaryId", "name", "date"]
+      required:
+        - id
+        - diaryId
+        - name
+        - date
       properties:
         id:
           type: string
@@ -391,7 +416,9 @@ components:
             $ref: '#/components/schemas/ShortDiaryEntry'
     FullDiaryEntry:
       type: object
-      required: ["value", "blocks"]
+      required:
+        - value
+        - blocks
       allOf:
         - $ref: '#/components/schemas/ShortDiaryEntry'
         - type: object
@@ -404,7 +431,9 @@ components:
                 $ref: '#/components/schemas/DiaryEntryBlock'
     DiaryEntryBlock:
       type: object
-      required: ["id", "value"]
+      required:
+        - id
+        - value
       properties:
         id:
           type: string
@@ -413,7 +442,11 @@ components:
           type: string
     SharingTask:
       type: object
-      required: ["diaryId", "receiverUserId", "encryptedDiaryKey", "sharedAt"]
+      required:
+        - diaryId
+        - receiverUserId
+        - encryptedDiaryKey
+        - sharedAt
       properties:
         diaryId:
           type: string
@@ -431,7 +464,8 @@ components:
           format: date-time
     AvailableSharingTasksList:
       type: object
-      required: ["items"]
+      required:
+        - items
       properties:
         items:
           type: array
@@ -439,7 +473,11 @@ components:
             $ref: '#/components/schemas/SharingTask'
     CreateDiaryEntryRequest:
       type: object
-      required: ["diaryId", "name", "date", "value"]
+      required:
+        - diaryId
+        - name
+        - date
+        - value
       properties:
         diaryId:
           type: string
@@ -457,7 +495,6 @@ components:
           required: true
     UpdateDiaryEntryRequest:
       type: object
-      required: []
       properties:
         diaryId:
           type: string
@@ -481,7 +518,12 @@ components:
             type: string
             format: uuid
     CreateSharingTaskRequest:
-      required: ["entryId", "myEncryptedKey", "receiverEncryptedKey", "receiverUserId", "blocks"]
+      required:
+        - entryId
+        - myEncryptedKey
+        - receiverEncryptedKey
+        - receiverUserId
+        - blocks
       type: object
       properties:
         entryId:
@@ -512,7 +554,9 @@ components:
             $ref: '#/components/schemas/DiaryEntryBlock'
     AcceptSharedDiaryRequest:
       type: object
-      required: ["diaryId", "encryptedDiaryKey"]
+      required:
+        - diaryId
+        - encryptedDiaryKey
       properties:
         diaryId:
           type: string

@@ -12,7 +12,7 @@ type sharingTasksUseCase struct {
 
 func (uc *sharingTasksUseCase) CreateSharingTask(
 	ctx context.Context,
-	req *usecase.NewSharingTaskRequest,
+	req *usecase.CreateSharingTaskRequest,
 ) (*usecase.SharingTask, error) {
 	return uc.repo.CreateSharingTask(ctx, req)
 }

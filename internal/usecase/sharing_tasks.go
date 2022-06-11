@@ -10,13 +10,13 @@ import (
 )
 
 type SharingTasksUseCase interface {
-	CreateSharingTask(ctx context.Context, req *NewSharingTaskRequest) (*SharingTask, error)
+	CreateSharingTask(ctx context.Context, req *CreateSharingTaskRequest) (*SharingTask, error)
 	GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]SharingTask, error)
 	AcceptSharingTask(ctx context.Context, req *AcceptSharingTaskRequest) error
 }
 
 type SharingTasksRepository interface {
-	CreateSharingTask(ctx context.Context, req *NewSharingTaskRequest) (*SharingTask, error)
+	CreateSharingTask(ctx context.Context, req *CreateSharingTaskRequest) (*SharingTask, error)
 	GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]SharingTask, error)
 	AcceptSharingTask(ctx context.Context, req *AcceptSharingTaskRequest) error
 }
@@ -32,7 +32,7 @@ type SharingTask struct {
 
 // DTO
 
-type NewSharingTaskRequest struct {
+type CreateSharingTaskRequest struct {
 	EntryID              uuid.UUID            `json:"entryId" binding:"required"`
 	ReceiverUserID       uuid.UUID            `json:"receiverUserId" binding:"required"`
 	MyEncryptedKey       string               `json:"myEncryptedKey" binding:"required"`
@@ -40,7 +40,7 @@ type NewSharingTaskRequest struct {
 	Blocks               []DiaryEntryBlockDto `json:"blocks" binding:"required,dive"`
 }
 
-type NewSharingTaskResponse struct {
+type CreateSharingTaskResponse struct {
 	DiaryID uuid.UUID `json:"diaryId"`
 }
 
