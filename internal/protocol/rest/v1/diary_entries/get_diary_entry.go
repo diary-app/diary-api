@@ -1,6 +1,7 @@
 package diary_entries
 
 import (
+	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ func (h *handler) GetByID() gin.HandlerFunc {
 		if err != nil {
 			noAccessErr, ok := err.(*usecase.NoAccessToDiaryEntryError)
 			if ok {
-				c.JSON(http.StatusForbidden, gin.H{"message": noAccessErr.Error()})
+				c.JSON(http.StatusForbidden, common.ErrorResponse{Message: noAccessErr.Error()})
 				return
 			}
 			_ = c.AbortWithError(http.StatusInternalServerError, err)

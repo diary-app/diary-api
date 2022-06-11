@@ -5,6 +5,7 @@ swagger:
   specPath: ./api/swagger.yml
 auth:
   jwtKey: "12345"
+  jwtTtlMinutes: 1440
 postgres:
   host: "localhost"
   port: 6432

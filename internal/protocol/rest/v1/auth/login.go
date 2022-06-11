@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,7 @@ func (h *handler) Login() gin.HandlerFunc {
 		authResult, err := h.useCase.Login(c, request)
 		if err != nil {
 			if err == usecase.ErrUserNotFound || err == bcrypt.ErrMismatchedHashAndPassword {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "incorrect user or password"})
+				c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorResponse{Message: "incorrect user or password"})
 			} else {
 				_ = c.AbortWithError(http.StatusInternalServerError, err)
 			}

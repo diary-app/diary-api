@@ -3,7 +3,9 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
@@ -22,8 +24,8 @@ type SharingTasksRepository interface {
 // Models
 
 type SharingTask struct {
-	DiaryID           uuid.UUID `json:"diaryID" db:"diary_id"`
-	ReceiverUserID    uuid.UUID `json:"receiverUserID" db:"receiver_user_id"`
+	DiaryID           uuid.UUID `json:"diaryId" db:"diary_id"`
+	ReceiverUserID    uuid.UUID `json:"receiverUserId" db:"receiver_user_id"`
 	EncryptedDiaryKey string    `json:"encryptedDiaryKey" db:"encrypted_diary_key"`
 	SharedAt          time.Time `json:"sharedAt" db:"shared_at"`
 }
@@ -35,7 +37,11 @@ type NewSharingTaskRequest struct {
 	ReceiverUserID       uuid.UUID            `json:"receiverUserId" binding:"required"`
 	MyEncryptedKey       string               `json:"myEncryptedKey" binding:"required"`
 	ReceiverEncryptedKey string               `json:"receiverEncryptedKey" binding:"required"`
-	Blocks               []DiaryEntryBlockDto `json:"blocks" binding:"required"`
+	Blocks               []DiaryEntryBlockDto `json:"blocks" binding:"required,dive"`
+}
+
+type NewSharingTaskResponse struct {
+	DiaryID uuid.UUID `json:"diaryId"`
 }
 
 type SharingTasksListResponse struct {
@@ -52,4 +58,33 @@ type AcceptSharingTaskRequest struct {
 var (
 	ErrUserAlreadyHasTaskForSameDiary = errors.New("user already has sharing task for the same diary")
 	ErrUserAlreadyHasAccessToDiary    = errors.New("user already has access to the diary")
+	ErrReceiverUserNotFound           = errors.New("receiver user not found")
 )
+
+type BadUpdatedBlocksError struct {
+	AlienBlocks      []uuid.UUID
+	DuplicatedBlocks []uuid.UUID
+	MissingBlocks    []uuid.UUID
+}
+
+func (e *BadUpdatedBlocksError) Error() string {
+	var sb strings.Builder
+	if len(e.AlienBlocks) > 0 {
+		sb.WriteString(fmt.Sprintf("blocks not contained in the entry: %s; ", idsToString(e.AlienBlocks)))
+	}
+	if len(e.DuplicatedBlocks) > 0 {
+		sb.WriteString(fmt.Sprintf("blocks duplicated in the request: %s;", idsToString(e.DuplicatedBlocks)))
+	}
+	if len(e.MissingBlocks) > 0 {
+		sb.WriteString(fmt.Sprintf("blocks missing in the requrest: %s", idsToString(e.MissingBlocks)))
+	}
+	return sb.String()
+}
+
+func idsToString(ids []uuid.UUID) string {
+	var b strings.Builder
+	for _, id := range ids {
+		b.WriteString(fmt.Sprintf("%s, ", id))
+	}
+	return strings.Trim(b.String(), ", ")
+}

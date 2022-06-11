@@ -1,6 +1,7 @@
 package diary_entries
 
 import (
+	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
 	"fmt"
@@ -17,13 +18,21 @@ func (h *handler) PatchEntry() gin.HandlerFunc {
 
 		request := &usecase.UpdateDiaryEntryRequest{}
 		if err := c.ShouldBindJSON(request); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("invalid request body: %v", err)})
+			c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorResponse{Message: fmt.Sprintf("invalid request body: %v", err)})
 			return
 		}
 
 		err := h.uc.Update(c, id, request)
 		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			if alienErr, ok := err.(*usecase.AlienEntryBlocksError); ok {
+				c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorResponse{Message: alienErr.Error()})
+			} else if diaryAccessErr, ok := err.(*usecase.NoAccessToDiaryError); ok {
+				c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: diaryAccessErr.Error()})
+			} else if entryAccessErr, ok := err.(*usecase.NoAccessToDiaryEntryError); ok {
+				c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: entryAccessErr.Error()})
+			} else {
+				_ = c.AbortWithError(http.StatusInternalServerError, err)
+			}
 			return
 		}
 

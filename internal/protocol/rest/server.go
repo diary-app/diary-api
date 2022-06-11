@@ -53,7 +53,7 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 	diaryUc := getDiaryUc(dbConn)
 	diaryEntriesUc := getDiaryEntriesUc(dbConn)
 	usersUc := getUsersAndAuthUc(dbConn)
-	sharingTasksUc := getSharingTasksUc(dbConn)
+	sharingTasksUc := getSharingTasksUc(dbConn, myClock)
 	authUc := getAuthUc(dbConn, tokenService)
 
 	errorHandlerMw := middleware.ErrorHandler(l)
@@ -72,8 +72,8 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 	return s
 }
 
-func getSharingTasksUc(conn *sqlx.DB) usecase.SharingTasksUseCase {
-	stRepo := sharingTasksRepository.New(conn)
+func getSharingTasksUc(conn *sqlx.DB, clock clock.Clock) usecase.SharingTasksUseCase {
+	stRepo := sharingTasksRepository.New(conn, clock)
 	return sharing_tasks.NewUseCase(stRepo)
 }
 

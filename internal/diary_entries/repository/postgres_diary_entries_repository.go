@@ -2,12 +2,10 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"diary-api/internal/auth"
 	"diary-api/internal/db"
 	"diary-api/internal/usecase"
 	"github.com/google/uuid"
-	"github.com/hashicorp/go-multierror"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -30,20 +28,20 @@ type diaryEntryBlock struct {
 	Value        string    `db:"value"`
 }
 
-func (p *pgRepo) GetEntries(ctx context.Context, r usecase.GetDiaryEntriesParams) ([]usecase.DiaryEntry, error) {
+func (p *pgRepo) GetEntries(ctx context.Context, params usecase.GetDiaryEntriesParams) ([]usecase.DiaryEntry, error) {
 	userID := auth.MustGetUserID(ctx)
 	namedArgs := map[string]interface{}{"user_id": userID}
 	query := `
 		SELECT * FROM diary_entries 
         WHERE diary_id IN (
         	SELECT id FROM diaries d JOIN diary_keys dk ON d.id = dk.diary_id WHERE dk.user_id = :user_id)`
-	if r.DiaryID != nil {
-		query += `AND WHERE diary_id = :diary_id`
-		namedArgs["diary_id"] = r.DiaryID
+	if params.DiaryID != nil {
+		query += ` AND diary_id = :diary_id`
+		namedArgs["diary_id"] = *params.DiaryID
 	}
-	if r.Date != nil {
-		query += `AND WHERE date = :date`
-		namedArgs["date"] = r.Date
+	if params.Date != nil {
+		query += ` AND date = :date`
+		namedArgs["date"] = time.Time(*params.Date)
 	}
 
 	query, args, err := p.db.BindNamed(query, namedArgs)
@@ -113,155 +111,12 @@ func getEntry(ctx context.Context, id uuid.UUID, tx db.Tx) (*diaryEntry, error) 
 	return entry, nil
 }
 
-func (p *pgRepo) Update(ctx context.Context, id uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error {
-	tx, err := p.db.Beginx()
-	if err != nil {
-		return err
-	}
-	if err = validateUpdateRequest(ctx, tx, id, r); err != nil {
-		return err
-	}
-	if err = update(ctx, tx, id, r); err != nil {
-		if rbErr := tx.Rollback(); err != nil {
-			return multierror.Append(err, rbErr)
-		}
-		return err
-	}
-	return db.ShouldCommitOrRollback(tx)
-}
-
-func validateUpdateRequest(ctx context.Context, tx db.TxOrDb, id uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error {
-	err := db.CheckMyAccessToEntry(ctx, tx, id)
-	if err != nil {
-		return err
-	}
-	if r.BlocksToUpsert != nil {
-		blocksIds := getBlocksIds(r.BlocksToUpsert)
-		if err := validateBlocksIds(ctx, tx, id, blocksIds); err != nil {
-			return err
-		}
-	}
-	if r.BlocksToDelete != nil {
-		if err := validateBlocksIds(ctx, tx, id, r.BlocksToDelete); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func update(ctx context.Context, tx *sqlx.Tx, id uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error {
-	if err := updateEntry(ctx, tx, id, r); err != nil {
-		return err
-	}
-	if err := upsertBlocks(ctx, tx, id, r.BlocksToUpsert); err != nil {
-		return err
-	}
-	if err := deleteBlocks(ctx, tx, r.BlocksToDelete); err != nil {
-		return err
-	}
-	return nil
-}
-
-func updateEntry(ctx context.Context, tx db.TxOrDb, id uuid.UUID, req *usecase.UpdateDiaryEntryRequest) error {
-	if req.Name == nil && req.Date == nil && req.DiaryId == nil {
-		return nil
-	}
-	const getQuery = `SELECT id, diary_id, name, date, value FROM diary_entries WHERE id = $1`
-	entry := &diaryEntry{}
-	if err := tx.GetContext(ctx, entry, getQuery, id); err != nil {
-		return err
-	}
-	if req.DiaryId != nil {
-		if err := db.CheckMyAccessToEntry(ctx, tx, *req.DiaryId); err != nil {
-			return err
-		}
-		entry.DiaryID = *req.DiaryId
-	}
-	if req.Name != nil {
-		entry.Name = *req.Name
-	}
-	if req.Date != nil {
-		entry.Date = time.Time(*req.Date)
-	}
-	if req.Value != nil {
-		entry.Value = *req.Value
-	}
-	const updateQuery = `UPDATE diary_entries SET name = :name, date = :date, diary_id = :diary_id, value = :value WHERE id = :id`
-	if _, err := tx.NamedExecContext(ctx, updateQuery, entry); err != nil {
-		return err
-	}
-	return nil
-}
-
-func upsertBlocks(ctx context.Context, tx db.TxOrDb, id uuid.UUID, blocks []usecase.DiaryEntryBlockDto) error {
-	if blocks == nil || len(blocks) == 0 {
-		return nil
-	}
-
-	const query = `
-INSERT INTO diary_entry_blocks (id, diary_entry_id, value) 
-VALUES (:id, :diary_entry_id, :value)
-ON CONFLICT DO UPDATE SET value = :value`
-
-	data := make([]diaryEntryBlock, len(blocks))
-	for i, b := range blocks {
-		data[i] = diaryEntryBlock{
-			ID:           b.ID,
-			DiaryEntryID: id,
-			Value:        b.Value,
-		}
-	}
-	if _, err := tx.NamedExecContext(ctx, query, data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func deleteBlocks(ctx context.Context, tx db.TxOrDb, ids []uuid.UUID) error {
-	if ids == nil || len(ids) == 0 {
-		return nil
-	}
-	query, args, err := sqlx.In(`DELETE FROM diary_entry_blocks WHERE id IN (?)`, ids)
-	if err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, query, args); err != nil {
-		return err
-	}
-	return nil
-}
-
 func getBlocksIds(blocks []usecase.DiaryEntryBlockDto) []uuid.UUID {
 	res := make([]uuid.UUID, len(blocks))
 	for i, b := range blocks {
 		res[i] = b.ID
 	}
 	return res
-}
-
-func validateBlocksIds(
-	ctx context.Context,
-	txOrDb db.TxOrDb,
-	entryId uuid.UUID,
-	blocksIds []uuid.UUID,
-) error {
-	getBadBlocksIdsQuery := `SELECT id FROM diary_entry_blocks WHERE id IN (?) AND diary_entry_id != ?`
-	query, args, err := sqlx.In(getBadBlocksIdsQuery, blocksIds, entryId)
-	if err != nil {
-		return err
-	}
-
-	var badIds []uuid.UUID
-	err = txOrDb.SelectContext(ctx, badIds, query, args...)
-	if err != nil && err != sql.ErrNoRows {
-		return err
-	}
-
-	if err == sql.ErrNoRows || len(badIds) == 0 {
-		return nil
-	}
-
-	return &usecase.AlienEntryBlocksError{DiaryEntryId: entryId, AlienBlocksIds: badIds}
 }
 
 func (p *pgRepo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -290,7 +145,7 @@ func (p *pgRepo) Create(ctx context.Context, entry *usecase.DiaryEntry) (*usecas
 	if err != nil {
 		return nil, err
 	}
-	if err = db.CheckMyAccessToDiaryContext(ctx, tx, entry.DiaryID); err != nil {
+	if err = db.CheckMyAccessToDiary(ctx, tx, entry.DiaryID); err != nil {
 		return nil, err
 	}
 

@@ -12,7 +12,8 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	JwtKey string `yaml:"jwtKey" env-required:"true" env:"JWT_KEY"`
+	JwtKey        string `yaml:"jwtKey" env-required:"true" env:"JWT_KEY"`
+	JwtTtlMinutes int    `yaml:"jwtTtlMinutes" env-default:"60"`
 }
 
 type DbConfig struct {

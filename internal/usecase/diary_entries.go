@@ -61,12 +61,17 @@ type UpdateDiaryEntryRequest struct {
 
 type DiaryEntryBlockDto struct {
 	ID    uuid.UUID `json:"id" binding:"required"`
-	Value string
+	Value string    `json:"value" binding:"required"`
+}
+
+type GetDiaryEntriesParamsDto struct {
+	DiaryIDStr *string `form:"diaryId" binding:"omitempty,uuid"`
+	DateStr    *string `form:"date" binding:"omitempty" time_format:"2006-01-02"`
 }
 
 type GetDiaryEntriesParams struct {
-	DiaryID *uuid.UUID       `uri:"diaryID,omitempty"`
-	Date    *common.DateOnly `uri:"date,omitempty"`
+	DiaryID *uuid.UUID
+	Date    *common.DateOnly
 }
 
 type ShortDiaryEntryResponse struct {
@@ -108,15 +113,14 @@ func (e *NoAccessToDiaryError) Error() string {
 }
 
 type AlienEntryBlocksError struct {
-	DiaryEntryId   uuid.UUID
 	AlienBlocksIds []uuid.UUID
 }
 
 func (e *AlienEntryBlocksError) Error() string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("entry %s does not contains these blocks: ", e.DiaryEntryId))
+	b.WriteString("entry does not contains these blocks: ")
 	for _, alienBlocksId := range e.AlienBlocksIds {
-		b.WriteString(fmt.Sprintf(", %s", alienBlocksId))
+		b.WriteString(fmt.Sprintf("%s, ", alienBlocksId))
 	}
-	return b.String()
+	return strings.Trim(b.String(), ", ")
 }

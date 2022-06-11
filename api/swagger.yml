@@ -392,7 +392,7 @@ components:
           description: Diary key encrypted with public key of receiving user
         sharedAt:
           type: string
-          format: date
+          format: date-time
 
   requestBodies:
     RegisterRequestBody:
@@ -446,11 +446,16 @@ components:
                 type: string
                 format: date
                 required: false
-              blocks:
+              blocksToUpsert:
                 type: array
                 required: false
                 items:
                   $ref: '#/components/schemas/DiaryEntryBlock'
+              blocksToDelete:
+                type: array
+                items:
+                  type: string
+                  format: uuid
     CreateSharingTaskRequestBody:
       required: true
       content:

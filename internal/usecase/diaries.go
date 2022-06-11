@@ -40,7 +40,7 @@ type CreateDiaryRequest struct {
 type DiaryResponse struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
-	OwnerID      uuid.UUID `json:"ownerID"`
+	OwnerID      uuid.UUID `json:"ownerId"`
 	EncryptedKey string    `json:"encryptedKey"`
 }
 

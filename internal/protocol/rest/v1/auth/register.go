@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,7 @@ func (h *handler) Register() gin.HandlerFunc {
 		if err != nil {
 			usernameTakenError, ok := err.(usecase.ErrUsernameTaken)
 			if ok {
-				c.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": usernameTakenError.Error()})
+				c.AbortWithStatusJSON(http.StatusConflict, common.ErrorResponse{Message: usernameTakenError.Error()})
 			} else {
 				_ = c.AbortWithError(http.StatusInternalServerError, err)
 			}

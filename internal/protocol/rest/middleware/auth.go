@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"diary-api/internal/auth"
+	"diary-api/internal/protocol/rest/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -40,6 +41,6 @@ func extractJwt(ctx *gin.Context) string {
 }
 
 func returnUnauthorized(ctx *gin.Context) {
-	ctx.JSON(http.StatusUnauthorized, gin.H{"message": "jwt token is missing or invalid"})
+	ctx.JSON(http.StatusUnauthorized, common.ErrorResponse{Message: "jwt token is missing or invalid"})
 	ctx.Abort()
 }

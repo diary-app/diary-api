@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CheckMyAccessToDiaryContext(ctx context.Context, tx TxOrDb, diaryID uuid.UUID) error {
+func CheckMyAccessToDiary(ctx context.Context, tx TxOrDb, diaryID uuid.UUID) error {
 	userID := auth.MustGetUserID(ctx)
 	return CheckUserAccessToDiary(ctx, tx, diaryID, userID)
 }

@@ -10,7 +10,6 @@ import (
 
 const (
 	SecondsBeforeExpireToRefresh = 5 * time.Minute
-	TokenLifespanMinutes         = 60
 )
 
 type Claims struct {
@@ -27,17 +26,19 @@ type TokenService interface {
 func NewTokenService(cfg *config.AuthConfig, c clock.Clock) TokenService {
 	return &tokenService{
 		jwtKey: []byte(cfg.JwtKey),
+		jwtTtl: time.Duration(cfg.JwtTtlMinutes) * time.Minute,
 		clock:  c,
 	}
 }
 
 type tokenService struct {
 	jwtKey []byte
+	jwtTtl time.Duration
 	clock  clock.Clock
 }
 
 func (t *tokenService) GenerateToken(userID uuid.UUID) (string, error) {
-	exp := t.clock.Now().Add(TokenLifespanMinutes * time.Minute)
+	exp := t.clock.Now().Add(t.jwtTtl)
 	claims := &Claims{
 		UserID: userID,
 		StandardClaims: jwt.StandardClaims{

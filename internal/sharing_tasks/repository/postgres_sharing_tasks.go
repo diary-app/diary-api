@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"diary-api/internal/auth"
 	"diary-api/internal/db"
 	"diary-api/internal/usecase"
@@ -17,39 +18,121 @@ type pgSharingTasksRepo struct {
 	clock clock.Clock
 }
 
-func (p *pgSharingTasksRepo) CreateSharingTask(
+func (r *pgSharingTasksRepo) CreateSharingTask(
 	ctx context.Context,
 	req *usecase.NewSharingTaskRequest,
 ) (*usecase.SharingTask, error) {
-	tx, err := p.db.Beginx()
+	tx, err := r.db.Beginx()
 	if err != nil {
 		return nil, err
 	}
 
 	userId := auth.MustGetUserID(ctx)
-	if err = db.CheckUserAccessToDiary(ctx, tx, req.EntryID, userId); err != nil {
-		return nil, err
+	if err = db.CheckUserAccessToEntry(ctx, tx, req.EntryID, userId); err != nil {
+		return nil, db.ShouldRollback(tx, err)
 	}
 
 	err = db.CheckUserAccessToEntry(ctx, tx, req.EntryID, req.ReceiverUserID)
 	if err == nil {
-		return nil, usecase.ErrUserAlreadyHasAccessToDiary
+		return nil, db.ShouldRollback(tx, usecase.ErrUserAlreadyHasAccessToDiary)
 	}
 	if _, ok := err.(*usecase.NoAccessToDiaryEntryError); !ok {
-		return nil, err
+		return nil, db.ShouldRollback(tx, err)
 	}
 
-	newDiaryID, err := moveEntryToNewDiary(ctx, tx, req.ReceiverUserID, req.EntryID)
+	if err = checkSharingTask(ctx, tx, req.EntryID, req.ReceiverUserID); err != nil {
+		return nil, db.ShouldRollback(tx, err)
+	}
+
+	newDiaryID, err := moveEntryToNewDiary(ctx, tx, req.ReceiverUserID, req.EntryID, req.MyEncryptedKey)
 	if err != nil {
-		return nil, err
+		return nil, db.ShouldRollback(tx, err)
 	}
 
-	task, err := p.createSharingTask(ctx, tx, req, newDiaryID)
+	err = updateBlocks(ctx, tx, req.EntryID, req.Blocks)
 	if err != nil {
-		return nil, err
+		return nil, db.ShouldRollback(tx, err)
 	}
 
+	task, err := r.createSharingTask(ctx, tx, req, newDiaryID)
+	if err != nil {
+		return nil, db.ShouldRollback(tx, err)
+	}
+
+	if err = db.ShouldCommitOrRollback(tx); err != nil {
+		return nil, err
+	}
 	return task, nil
+}
+
+func checkSharingTask(ctx context.Context, tx db.TxOrDb, entryID uuid.UUID, receiverUserID uuid.UUID) error {
+	const checkSharingTaskQuery = `
+SELECT EXISTS(SELECT 1 
+              FROM diary_entries de 
+                  JOIN diaries d ON de.diary_id = d.id 
+                  JOIN sharing_tasks st ON d.id = st.diary_id 
+              WHERE de.id = $1 AND st.receiver_user_id = $2)`
+
+	var taskExists bool
+	if err := tx.QueryRowxContext(ctx, checkSharingTaskQuery, entryID, receiverUserID).Scan(&taskExists); err != nil {
+		return err
+	}
+	if taskExists {
+		return usecase.ErrUserAlreadyHasTaskForSameDiary
+	}
+	return nil
+}
+
+func updateBlocks(ctx context.Context, tx db.TxOrDb, entryID uuid.UUID, blocks []usecase.DiaryEntryBlockDto) error {
+	const getAllBlocksIdsQuery = `SELECT id FROM diary_entry_blocks WHERE diary_entry_id = $1`
+	var existingIds []uuid.UUID
+	if err := tx.SelectContext(ctx, &existingIds, getAllBlocksIdsQuery, entryID); err != nil {
+		return err
+	}
+
+	seenIds := map[uuid.UUID]bool{}
+	for _, ids := range existingIds {
+		seenIds[ids] = false
+	}
+	var alienIds []uuid.UUID
+	var duplicatedIds []uuid.UUID
+	for _, b := range blocks {
+		if _, ok := seenIds[b.ID]; !ok {
+			alienIds = append(alienIds, b.ID)
+		} else if !seenIds[b.ID] {
+			seenIds[b.ID] = true
+		} else {
+			duplicatedIds = append(duplicatedIds, b.ID)
+		}
+	}
+	var missingIds []uuid.UUID
+	for id, seen := range seenIds {
+		if !seen {
+			missingIds = append(missingIds, id)
+		}
+	}
+
+	if len(alienIds) > 0 || len(duplicatedIds) > 0 || len(missingIds) > 0 {
+		return &usecase.BadUpdatedBlocksError{
+			AlienBlocks: alienIds, DuplicatedBlocks: duplicatedIds, MissingBlocks: missingIds}
+	}
+
+	entriesToUpdate := make([]diaryEntryBlock, len(blocks))
+	for i, b := range blocks {
+		entriesToUpdate[i] = diaryEntryBlock{ID: b.ID, Value: b.Value}
+	}
+	const updateQuery = `UPDATE diary_entry_blocks SET value = :value WHERE id = :id`
+	for _, entry := range entriesToUpdate {
+		if _, err := tx.NamedExecContext(ctx, updateQuery, entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type diaryEntryBlock struct {
+	ID    uuid.UUID `db:"id"`
+	Value string    `db:"value"`
 }
 
 func moveEntryToNewDiary(
@@ -57,6 +140,7 @@ func moveEntryToNewDiary(
 	tx db.TxOrDb,
 	receiverID uuid.UUID,
 	entryID uuid.UUID,
+	myEncryptedKey string,
 ) (uuid.UUID, error) {
 
 	userID := auth.MustGetUserID(ctx)
@@ -65,8 +149,11 @@ func moveEntryToNewDiary(
 		return uuid.UUID{}, nil
 	}
 	receiver, err := getUser(ctx, tx, receiverID)
+	if err == sql.ErrNoRows {
+		return uuid.UUID{}, usecase.ErrReceiverUserNotFound
+	}
 	if err != nil {
-		return uuid.UUID{}, nil
+		return uuid.UUID{}, err
 	}
 
 	//language=postgresql
@@ -79,7 +166,13 @@ INSERT INTO diaries (id, name, owner_id) VALUES (:id, :name, :owner_id)`
 		"owner_id": owner.ID,
 	}
 	if _, err = tx.NamedExecContext(ctx, createDiaryQuery, args); err != nil {
-		return uuid.UUID{}, nil
+		return uuid.UUID{}, err
+	}
+
+	//language=postgresql
+	const createDiaryKeyQuery = `INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES ($1, $2, $3)`
+	if _, err = tx.ExecContext(ctx, createDiaryKeyQuery, newDiaryID, userID, myEncryptedKey); err != nil {
+		return uuid.UUID{}, err
 	}
 
 	//language=postgresql
@@ -129,40 +222,55 @@ VALUES (:diary_id, :receiver_user_id, :encrypted_diary_key, :shared_at)`
 	return task, nil
 }
 
-func (p *pgSharingTasksRepo) GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]usecase.SharingTask, error) {
+func (r *pgSharingTasksRepo) GetSharingTasks(ctx context.Context, userID uuid.UUID) ([]usecase.SharingTask, error) {
 	//language=postgresql
 	const query = `
 SELECT diary_id, receiver_user_id, encrypted_diary_key, shared_at FROM sharing_tasks WHERE receiver_user_id = $1`
 	tasksArr := make([]usecase.SharingTask, 0)
-	if err := p.db.SelectContext(ctx, &tasksArr, query, userID); err != nil {
+	if err := r.db.SelectContext(ctx, &tasksArr, query, userID); err != nil {
 		return nil, err
 	}
 
 	return tasksArr, nil
 }
 
-func (p *pgSharingTasksRepo) AcceptSharingTask(ctx context.Context, req *usecase.AcceptSharingTaskRequest) error {
-	//	tx, err := p.db.Beginx()
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	userID := auth.MustGetUserID(ctx)
-	//	//language=postgresql
-	//	const insertKeyQuery = `
-	//INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES (:diary_id, :user_id, :encrypted_key)`
-	//
-	//	//language=postgresql
-	//	const query = `
-	//DELETE FROM sharing_tasks WHERE diary_id = $1 AND receiver_user_id = $2`
-	//
-	//	if _, err := p.db.ExecContext(ctx, query, diaryID, receiverID); err != nil {
-	//		return err
-	//	}
+func (r *pgSharingTasksRepo) AcceptSharingTask(ctx context.Context, req *usecase.AcceptSharingTaskRequest) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	userID := auth.MustGetUserID(ctx)
+	//language=postgresql
+	const checkTaskQuery = `SELECT EXISTS(
+    	SELECT * FROM sharing_tasks 
+		WHERE diary_id = $1 AND receiver_user_id = $2)`
+	var taskExists bool
+	if err = tx.QueryRowxContext(ctx, checkTaskQuery, req.DiaryID, userID).Scan(&taskExists); err != nil {
+		return err
+	}
+	if !taskExists {
+		return usecase.ErrCommonNotFound
+	}
+
+	//language=postgresql
+	const insertKeyQuery = `
+	INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES ($1, $2, $3)`
+	if _, err = tx.ExecContext(ctx, insertKeyQuery, req.DiaryID, userID, req.EncryptedDiaryKey); err != nil {
+		return err
+	}
+
+	//language=postgresql
+	const query = `
+	DELETE FROM sharing_tasks WHERE diary_id = $1 AND receiver_user_id = $2`
+
+	if _, err = r.db.ExecContext(ctx, query, req.DiaryID, userID); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func New(db *sqlx.DB) usecase.SharingTasksRepository {
-	return &pgSharingTasksRepo{db: db}
+func New(db *sqlx.DB, clock clock.Clock) usecase.SharingTasksRepository {
+	return &pgSharingTasksRepo{db: db, clock: clock}
 }

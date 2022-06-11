@@ -37,6 +37,13 @@ func GetNamedContext(tx *sqlx.Tx, ctx context.Context, dest interface{}, query s
 	return nil
 }
 
+func ShouldRollback(tx Tx, err error) error {
+	if rbErr := tx.Rollback(); rbErr != nil {
+		return multierror.Append(err, rbErr)
+	}
+	return err
+}
+
 func ShouldCommitOrRollback(tx Tx) error {
 	if commitErr := tx.Commit(); commitErr != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
