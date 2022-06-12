@@ -6,9 +6,10 @@ import (
 )
 
 type Config struct {
-	AppPort string     `yaml:"appPort" env-required:"false" env:"PORT"`
-	PG      DbConfig   `yaml:"postgres"`
-	Auth    AuthConfig `yaml:"auth"`
+	AppPort  string     `yaml:"appPort" env-required:"false" env:"PORT"`
+	PG       DbConfig   `yaml:"postgres"`
+	Auth     AuthConfig `yaml:"auth"`
+	LogDebug bool       `env:"LOG_DEBUG" env-default:"false"`
 }
 
 type AuthConfig struct {

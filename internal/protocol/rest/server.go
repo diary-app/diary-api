@@ -56,10 +56,9 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 	sharingTasksUc := getSharingTasksUc(dbConn, myClock)
 	authUc := getAuthUc(dbConn, tokenService)
 
-	errorHandlerMw := middleware.ErrorHandler(l)
 	s := &server{
 		cfg: cfg,
-		r:   initRouter(errorHandlerMw),
+		r:   initRouter(l),
 	}
 
 	s.r.GET("/api/ping", func(c *gin.Context) {
@@ -77,17 +76,19 @@ func getSharingTasksUc(conn *sqlx.DB, clock clock.Clock) usecase.SharingTasksUse
 	return sharing_tasks.NewUseCase(stRepo)
 }
 
-func initRouter(errorHandler gin.HandlerFunc) *gin.Engine {
+func initRouter(l *log.Logger) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLoggerMiddleware(l))
+	r.Use(middleware.ResponseLoggerMiddleware(l))
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
 		AllowHeaders:     []string{"Authorization", "Origin"},
 		AllowCredentials: false,
 	}))
-	r.Use(errorHandler)
+	r.Use(middleware.ErrorHandler(l))
 	return r
 }
 

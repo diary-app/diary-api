@@ -17,6 +17,9 @@ func main() {
 	if err != nil {
 		logger.Fatalf("cannot start server: %v", err)
 	}
+	if cfg.LogDebug {
+		logger.SetLevel(log.DebugLevel)
+	}
 
 	server := rest.NewServer(cfg, logger)
 	if err := server.Run(); err != nil {
