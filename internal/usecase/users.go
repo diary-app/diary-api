@@ -11,9 +11,9 @@ type FullUser struct {
 	ID                            uuid.UUID `db:"id" json:"id"`
 	Username                      string    `db:"username" json:"username"`
 	PasswordHash                  []byte    `db:"password_hash" json:"-"`
-	SaltForKeys                   []byte    `db:"salt_for_keys" json:"saltForKeys"`
+	MasterKeySalt                 []byte    `db:"salt_for_keys" json:"masterKeySalt"`
 	PublicKeyForSharing           string    `db:"public_key_for_sharing" json:"publicKeyForSharing"`
-	EncryptedPrivateKeyForSharing string    `db:"encrypted_private_key_for_sharing" json:"encryptedPrivateKeyForSharing"`
+	EncryptedPrivateKeyForSharing []byte    `db:"encrypted_private_key_for_sharing" json:"encryptedPrivateKeyForSharing"`
 }
 
 func (u *FullUser) String() string {
@@ -29,10 +29,10 @@ type ShortUser struct {
 type RegisterRequest struct {
 	Username                      string `json:"username" binding:"required"`
 	Password                      string `json:"password" binding:"required"`
-	MasterKeySalt                 string `json:"masterKeySalt" binding:"required"`
+	MasterKeySalt                 []byte `json:"masterKeySalt" binding:"required"`
 	PublicKeyForSharing           string `json:"publicKeyForSharing" binding:"required"`
-	EncryptedPrivateKeyForSharing string `json:"encryptedPrivateKeyForSharing" binding:"required"`
-	EncryptedDiaryKey             string `json:"encryptedDiaryKey" binding:"required"`
+	EncryptedPrivateKeyForSharing []byte `json:"encryptedPrivateKeyForSharing" binding:"required"`
+	EncryptedDiaryKey             []byte `json:"encryptedDiaryKey" binding:"required"`
 }
 
 type LoginRequest struct {
@@ -42,7 +42,7 @@ type LoginRequest struct {
 
 type RegistrationResult struct {
 	Token   string    `json:"token"`
-	DiaryID uuid.UUID `json:"diaryID"`
+	DiaryID uuid.UUID `json:"diaryId"`
 }
 
 type AuthResult struct {

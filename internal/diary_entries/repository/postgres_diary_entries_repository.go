@@ -19,13 +19,13 @@ type diaryEntry struct {
 	DiaryID uuid.UUID `db:"diary_id"`
 	Name    string    `db:"name"`
 	Date    time.Time `db:"date"`
-	Value   string    `db:"value"`
+	Value   []byte    `db:"value"`
 }
 
 type diaryEntryBlock struct {
 	ID           uuid.UUID `db:"id"`
 	DiaryEntryID uuid.UUID `db:"diary_entry_id"`
-	Value        string    `db:"value"`
+	Value        []byte    `db:"value"`
 }
 
 func (p *pgRepo) GetEntries(ctx context.Context, params usecase.GetDiaryEntriesParams) ([]usecase.DiaryEntry, error) {
@@ -91,6 +91,7 @@ func mapToUseCaseDiaryEntry(entry *diaryEntry, blocks []diaryEntryBlock) *usecas
 		DiaryID: entry.DiaryID,
 		Name:    entry.Name,
 		Date:    entry.Date,
+		Value:   entry.Value,
 		Blocks:  make([]usecase.DiaryEntryBlock, len(blocks)),
 	}
 	for i, b := range blocks {
@@ -103,7 +104,7 @@ func mapToUseCaseDiaryEntry(entry *diaryEntry, blocks []diaryEntryBlock) *usecas
 }
 
 func getEntry(ctx context.Context, id uuid.UUID, tx db.Tx) (*diaryEntry, error) {
-	const entryQuery = `SELECT id, diary_id, name, date FROM diary_entries WHERE id = $1`
+	const entryQuery = `SELECT id, diary_id, name, date, value FROM diary_entries WHERE id = $1`
 	entry := &diaryEntry{}
 	if err := tx.GetContext(ctx, entry, entryQuery, id); err != nil {
 		return nil, err

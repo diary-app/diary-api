@@ -22,7 +22,7 @@ RETURNING id`
 	const insertDiaryQuery = `INSERT INTO diaries(name, owner_id) VALUES (:name, :owner_id) RETURNING id`
 	const insertDiaryKeyQuery = `
 INSERT INTO diary_keys(diary_id, user_id, encrypted_key) 
-VALUES (:diary_id, :user_id, :encrypted_key)`
+VALUES ($1, $2, $3)`
 
 	tx, err := p.db.Beginx()
 	if err != nil {
@@ -39,10 +39,8 @@ VALUES (:diary_id, :user_id, :encrypted_key)`
 		return nil, nil, err
 	}
 
-	diaryKey := diary.Keys[0]
-	diaryKey.UserID = userID
-	diaryKey.DiaryID = diaryID
-	if _, err = tx.NamedExecContext(ctx, insertDiaryKeyQuery, diaryKey); err != nil {
+	keyBytes := diary.Keys[0].EncryptedKey
+	if _, err = tx.ExecContext(ctx, insertDiaryKeyQuery, diaryID, userID, keyBytes); err != nil {
 		return nil, nil, err
 	}
 

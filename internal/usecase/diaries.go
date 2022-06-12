@@ -27,7 +27,7 @@ type Diary struct {
 type DiaryKey struct {
 	DiaryID      uuid.UUID `json:"diaryID" db:"diary_id"`
 	UserID       uuid.UUID `json:"userID" db:"user_id"`
-	EncryptedKey string    `json:"encryptedKey" db:"encrypted_key"`
+	EncryptedKey []byte    `json:"encryptedKey" db:"encrypted_key"`
 }
 
 // DTO
@@ -41,7 +41,7 @@ type DiaryResponse struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
 	OwnerID      uuid.UUID `json:"ownerId"`
-	EncryptedKey string    `json:"encryptedKey"`
+	EncryptedKey []byte    `json:"key"`
 }
 
 type DiaryListResponse struct {

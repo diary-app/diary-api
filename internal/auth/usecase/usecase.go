@@ -52,10 +52,11 @@ func mapRegisterRequestToUserAndDiary(req *usecase.RegisterRequest) (*usecase.Fu
 	if err != nil {
 		return nil, nil, err
 	}
+
 	user := &usecase.FullUser{
 		Username:                      req.Username,
 		PasswordHash:                  passwordHashBytes,
-		SaltForKeys:                   []byte(req.MasterKeySalt),
+		MasterKeySalt:                 req.MasterKeySalt,
 		PublicKeyForSharing:           req.PublicKeyForSharing,
 		EncryptedPrivateKeyForSharing: req.EncryptedPrivateKeyForSharing,
 	}

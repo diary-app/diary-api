@@ -31,6 +31,7 @@ func mapToEntryResponse(e *usecase.DiaryEntry) usecase.DiaryEntryResponse {
 		DiaryID: e.DiaryID,
 		Name:    e.Name,
 		Date:    common.DateOnly(e.Date),
+		Value:   e.Value,
 		Blocks:  blocks,
 	}
 }

@@ -32,13 +32,13 @@ type DiaryEntry struct {
 	DiaryID uuid.UUID         `json:"diaryID" db:"diary_id"`
 	Name    string            `json:"name" db:"name"`
 	Date    time.Time         `json:"date" db:"date"`
-	Value   string            `json:"value" db:"value"`
+	Value   []byte            `json:"value" db:"value"`
 	Blocks  []DiaryEntryBlock `json:"blocks"`
 }
 
 type DiaryEntryBlock struct {
-	ID    uuid.UUID
-	Value string
+	ID    uuid.UUID `json:"id"`
+	Value []byte    `json:"value"`
 }
 
 // DTO
@@ -47,21 +47,21 @@ type CreateDiaryEntryRequest struct {
 	DiaryID uuid.UUID       `json:"diaryId" binding:"required"`
 	Name    string          `json:"name" binding:"required"`
 	Date    common.DateOnly `json:"date" binding:"required"`
-	Value   string          `json:"value" binding:"required"`
+	Value   []byte          `json:"value"`
 }
 
 type UpdateDiaryEntryRequest struct {
 	DiaryId        *uuid.UUID           `json:"diaryId"`
 	Name           *string              `json:"name"`
 	Date           *common.DateOnly     `json:"date"`
-	Value          *string              `json:"value"`
+	Value          []byte               `json:"value"`
 	BlocksToUpsert []DiaryEntryBlockDto `json:"blocksToUpsert"`
 	BlocksToDelete []uuid.UUID          `json:"blocksToDelete"`
 }
 
 type DiaryEntryBlockDto struct {
 	ID    uuid.UUID `json:"id" binding:"required"`
-	Value string    `json:"value" binding:"required"`
+	Value []byte    `json:"value" binding:"required"`
 }
 
 type GetDiaryEntriesParamsDto struct {
@@ -82,16 +82,17 @@ type ShortDiaryEntryResponse struct {
 }
 
 type DiaryEntryResponse struct {
-	ID      uuid.UUID                 `json:"Id"`
+	ID      uuid.UUID                 `json:"id"`
 	DiaryID uuid.UUID                 `json:"diaryId"`
 	Name    string                    `json:"name"`
 	Date    common.DateOnly           `json:"date"`
+	Value   []byte                    `json:"value"`
 	Blocks  []DiaryEntryBlockResponse `json:"blocks"`
 }
 
 type DiaryEntryBlockResponse struct {
 	ID    uuid.UUID `json:"id"`
-	Value string    `json:"value"`
+	Value []byte    `json:"value"`
 }
 
 // Errors

@@ -130,7 +130,7 @@ func updateEntry(ctx context.Context, tx db.TxOrDb, id uuid.UUID, req *usecase.U
 		entry.Date = time.Time(*req.Date)
 	}
 	if req.Value != nil {
-		entry.Value = *req.Value
+		entry.Value = req.Value
 	}
 	const updateQuery = `UPDATE diary_entries SET name = :name, date = :date, diary_id = :diary_id, value = :value WHERE id = :id`
 	if _, err := tx.NamedExecContext(ctx, updateQuery, entry); err != nil {

@@ -132,7 +132,7 @@ func updateBlocks(ctx context.Context, tx db.TxOrDb, entryID uuid.UUID, blocks [
 
 type diaryEntryBlock struct {
 	ID    uuid.UUID `db:"id"`
-	Value string    `db:"value"`
+	Value []byte    `db:"value"`
 }
 
 func moveEntryToNewDiary(
