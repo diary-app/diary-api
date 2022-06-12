@@ -169,13 +169,13 @@ INSERT INTO diaries (id, name, owner_id) VALUES (:id, :name, :owner_id)`
 
 	//language=postgresql
 	const createDiaryKeyQuery = `INSERT INTO diary_keys (diary_id, user_id, encrypted_key) VALUES ($1, $2, $3)`
-	if _, err = tx.ExecContext(ctx, createDiaryKeyQuery, newDiaryID, userID, req.MyEncryptedKey, req.Value); err != nil {
+	if _, err = tx.ExecContext(ctx, createDiaryKeyQuery, newDiaryID, userID, req.MyEncryptedKey); err != nil {
 		return uuid.UUID{}, err
 	}
 
 	//language=postgresql
-	const moveEntryQuery = `UPDATE diary_entries SET diary_id = $2, value = $3 WHERE id = $1`
-	if _, err = tx.ExecContext(ctx, moveEntryQuery, req.EntryID, newDiaryID); err != nil {
+	const updateEntryQuery = `UPDATE diary_entries SET diary_id = $2, value = $3 WHERE id = $1`
+	if _, err = tx.ExecContext(ctx, updateEntryQuery, req.EntryID, newDiaryID, req.Value); err != nil {
 		return uuid.UUID{}, err
 	}
 
