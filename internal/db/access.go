@@ -7,32 +7,44 @@ import (
 	"github.com/google/uuid"
 )
 
-func CheckMyAccessToDiary(ctx context.Context, tx TxOrDb, diaryID uuid.UUID) error {
+func CheckMyWriteAccessToDiary(ctx context.Context, tx TxOrDb, diaryID uuid.UUID) error {
 	userID := auth.MustGetUserID(ctx)
-	return CheckUserAccessToDiary(ctx, tx, diaryID, userID)
-}
-
-func CheckUserAccessToDiary(ctx context.Context, tx TxOrDb, diaryID uuid.UUID, userID uuid.UUID) error {
 	const checkAccessQuery = `SELECT EXISTS(
-    	SELECT * FROM diaries d JOIN diary_keys dk ON d.id = dk.diary_id 
-		WHERE d.id = $1 AND dk.user_id = $2)`
+    	SELECT * FROM diaries
+		WHERE id = $1 AND owner_id = $2)`
 
 	var hasAccess bool
 	if err := tx.QueryRowxContext(ctx, checkAccessQuery, diaryID, userID).Scan(&hasAccess); err != nil {
 		return err
 	}
 	if !hasAccess {
-		return &usecase.NoAccessToDiaryError{DiaryID: diaryID}
+		return &usecase.NoWriteAccessToDiaryError{DiaryID: diaryID}
 	}
 	return nil
 }
 
-func CheckMyAccessToEntry(ctx context.Context, tx TxOrDb, entryID uuid.UUID) error {
+func CheckMyWriteAccessToEntry(ctx context.Context, tx TxOrDb, entryID uuid.UUID) error {
 	userID := auth.MustGetUserID(ctx)
-	return CheckUserAccessToEntry(ctx, tx, entryID, userID)
+	const checkAccessQuery = `SELECT EXISTS(
+    	SELECT * FROM diary_entries e JOIN diaries d ON e.diary_id = d.id 
+		WHERE e.id = $1 AND d.owner_id = $2)`
+	var hasAccess bool
+	if err := tx.QueryRowxContext(ctx, checkAccessQuery, entryID, userID).Scan(&hasAccess); err != nil {
+		return err
+	}
+	if !hasAccess {
+		return &usecase.NoWriteAccessToDiaryEntryError{EntryID: entryID}
+	}
+
+	return nil
 }
 
-func CheckUserAccessToEntry(ctx context.Context, tx TxOrDb, entryID uuid.UUID, userID uuid.UUID) error {
+func CheckMyReadAccessToEntry(ctx context.Context, tx TxOrDb, entryID uuid.UUID) error {
+	userID := auth.MustGetUserID(ctx)
+	return CheckUserReadAccessToEntry(ctx, tx, entryID, userID)
+}
+
+func CheckUserReadAccessToEntry(ctx context.Context, tx TxOrDb, entryID uuid.UUID, userID uuid.UUID) error {
 	const checkAccessQuery = `SELECT EXISTS(
     	SELECT * FROM diary_entries e JOIN diaries d ON e.diary_id = d.id JOIN diary_keys dk ON d.id = dk.diary_id 
 		WHERE e.id = $1 AND dk.user_id = $2)`
@@ -41,7 +53,7 @@ func CheckUserAccessToEntry(ctx context.Context, tx TxOrDb, entryID uuid.UUID, u
 		return err
 	}
 	if !hasAccess {
-		return &usecase.NoAccessToDiaryEntryError{EntryID: entryID}
+		return &usecase.NoReadAccessToDiaryEntryError{EntryID: entryID}
 	}
 
 	return nil

@@ -25,9 +25,9 @@ func (h *handler) PatchEntry() gin.HandlerFunc {
 		if err != nil {
 			if alienErr, ok := err.(*usecase.AlienEntryBlocksError); ok {
 				c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorResponse{Message: alienErr.Error()})
-			} else if diaryAccessErr, ok := err.(*usecase.NoAccessToDiaryError); ok {
+			} else if diaryAccessErr, ok := err.(*usecase.NoWriteAccessToDiaryError); ok {
 				c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: diaryAccessErr.Error()})
-			} else if entryAccessErr, ok := err.(*usecase.NoAccessToDiaryEntryError); ok {
+			} else if entryAccessErr, ok := err.(*usecase.NoWriteAccessToDiaryEntryError); ok {
 				c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: entryAccessErr.Error()})
 			} else {
 				_ = c.AbortWithError(http.StatusInternalServerError, err)

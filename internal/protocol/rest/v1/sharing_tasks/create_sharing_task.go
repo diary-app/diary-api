@@ -24,7 +24,7 @@ func (h *handler) Create() gin.HandlerFunc {
 
 		if err == usecase.ErrReceiverUserNotFound {
 			c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorResponse{Message: err.Error()})
-		} else if accessErr, ok := err.(*usecase.NoAccessToDiaryEntryError); ok {
+		} else if accessErr, ok := err.(*usecase.NoWriteAccessToDiaryEntryError); ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: accessErr.Error()})
 		} else if err == usecase.ErrUserAlreadyHasAccessToDiary {
 			c.AbortWithStatusJSON(http.StatusConflict, common.ErrorResponse{Message: "user already has access to the diary"})

@@ -19,9 +19,9 @@ func (h *handler) GetByID() gin.HandlerFunc {
 
 		diaryEntry, err := h.uc.GetByID(c, id)
 		if err != nil {
-			noAccessErr, ok := err.(*usecase.NoAccessToDiaryEntryError)
+			noAccessErr, ok := err.(*usecase.NoReadAccessToDiaryEntryError)
 			if ok {
-				c.JSON(http.StatusForbidden, common.ErrorResponse{Message: noAccessErr.Error()})
+				c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: noAccessErr.Error()})
 				return
 			}
 			_ = c.AbortWithError(http.StatusInternalServerError, err)

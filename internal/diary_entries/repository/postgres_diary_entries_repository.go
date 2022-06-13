@@ -65,7 +65,7 @@ func (p *pgRepo) GetByID(ctx context.Context, id uuid.UUID) (*usecase.DiaryEntry
 	if err != nil {
 		return nil, err
 	}
-	err = db.CheckMyAccessToEntry(ctx, tx, id)
+	err = db.CheckMyReadAccessToEntry(ctx, tx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (p *pgRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if err := db.CheckMyAccessToEntry(ctx, tx, id); err != nil {
+	if err := db.CheckMyWriteAccessToEntry(ctx, tx, id); err != nil {
 		return err
 	}
 	const query = `DELETE FROM diary_entries WHERE id = $1`
@@ -146,7 +146,7 @@ func (p *pgRepo) Create(ctx context.Context, entry *usecase.DiaryEntry) (*usecas
 	if err != nil {
 		return nil, err
 	}
-	if err = db.CheckMyAccessToDiary(ctx, tx, entry.DiaryID); err != nil {
+	if err = db.CheckMyWriteAccessToDiary(ctx, tx, entry.DiaryID); err != nil {
 		return nil, err
 	}
 

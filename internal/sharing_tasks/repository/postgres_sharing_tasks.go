@@ -27,16 +27,15 @@ func (r *pgSharingTasksRepo) CreateSharingTask(
 		return nil, err
 	}
 
-	userId := auth.MustGetUserID(ctx)
-	if err = db.CheckUserAccessToEntry(ctx, tx, req.EntryID, userId); err != nil {
+	if err = db.CheckMyWriteAccessToEntry(ctx, tx, req.EntryID); err != nil {
 		return nil, db.ShouldRollback(tx, err)
 	}
 
-	err = db.CheckUserAccessToEntry(ctx, tx, req.EntryID, req.ReceiverUserID)
+	err = db.CheckUserReadAccessToEntry(ctx, tx, req.EntryID, req.ReceiverUserID)
 	if err == nil {
 		return nil, db.ShouldRollback(tx, usecase.ErrUserAlreadyHasAccessToDiary)
 	}
-	if _, ok := err.(*usecase.NoAccessToDiaryEntryError); !ok {
+	if _, ok := err.(*usecase.NoReadAccessToDiaryEntryError); !ok {
 		return nil, db.ShouldRollback(tx, err)
 	}
 

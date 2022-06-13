@@ -97,20 +97,36 @@ type DiaryEntryBlockResponse struct {
 
 // Errors
 
-type NoAccessToDiaryEntryError struct {
+type NoReadAccessToDiaryEntryError struct {
 	EntryID uuid.UUID
 }
 
-func (e *NoAccessToDiaryEntryError) Error() string {
-	return fmt.Sprintf("no access to entry %v", e.EntryID)
+func (e *NoReadAccessToDiaryEntryError) Error() string {
+	return fmt.Sprintf("no read access to entry %v", e.EntryID)
 }
 
-type NoAccessToDiaryError struct {
+type NoReadAccessToDiaryError struct {
 	DiaryID uuid.UUID
 }
 
-func (e *NoAccessToDiaryError) Error() string {
-	return fmt.Sprintf("no access to diary %v", e.DiaryID)
+func (e *NoReadAccessToDiaryError) Error() string {
+	return fmt.Sprintf("no read access to diary %v", e.DiaryID)
+}
+
+type NoWriteAccessToDiaryError struct {
+	DiaryID uuid.UUID
+}
+
+func (e *NoWriteAccessToDiaryError) Error() string {
+	return fmt.Sprintf("no write access to diary %v", e.DiaryID)
+}
+
+type NoWriteAccessToDiaryEntryError struct {
+	EntryID uuid.UUID
+}
+
+func (e *NoWriteAccessToDiaryEntryError) Error() string {
+	return fmt.Sprintf("no write access to entry %v", e.EntryID)
 }
 
 type AlienEntryBlocksError struct {

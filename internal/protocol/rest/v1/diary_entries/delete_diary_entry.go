@@ -1,7 +1,9 @@
 package diary_entries
 
 import (
+	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
+	"diary-api/internal/usecase"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -17,7 +19,11 @@ func (h *handler) Delete() gin.HandlerFunc {
 
 		err := h.uc.Delete(c, id)
 		if err != nil {
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			if accessErr, ok := err.(*usecase.NoWriteAccessToDiaryError); ok {
+				c.AbortWithStatusJSON(http.StatusForbidden, common.ErrorResponse{Message: accessErr.Error()})
+			} else {
+				_ = c.AbortWithError(http.StatusInternalServerError, err)
+			}
 			return
 		}
 

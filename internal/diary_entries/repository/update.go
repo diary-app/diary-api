@@ -90,7 +90,7 @@ func update(ctx context.Context, tx *sqlx.Tx, id uuid.UUID, r *usecase.UpdateDia
 }
 
 func validateUpdateRequest(ctx context.Context, tx db.TxOrDb, entryID uuid.UUID, r *usecase.UpdateDiaryEntryRequest) error {
-	err := db.CheckMyAccessToEntry(ctx, tx, entryID)
+	err := db.CheckMyWriteAccessToEntry(ctx, tx, entryID)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func updateEntry(ctx context.Context, tx db.TxOrDb, id uuid.UUID, req *usecase.U
 		return err
 	}
 	if req.DiaryId != nil {
-		if err := db.CheckMyAccessToDiary(ctx, tx, *req.DiaryId); err != nil {
+		if err := db.CheckMyWriteAccessToDiary(ctx, tx, *req.DiaryId); err != nil {
 			return err
 		}
 		entry.DiaryID = *req.DiaryId
