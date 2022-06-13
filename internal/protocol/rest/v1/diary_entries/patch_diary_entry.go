@@ -4,7 +4,6 @@ import (
 	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -18,7 +17,7 @@ func (h *handler) PatchEntry() gin.HandlerFunc {
 
 		request := &usecase.UpdateDiaryEntryRequest{}
 		if err := c.ShouldBindJSON(request); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorResponse{Message: fmt.Sprintf("invalid request body: %v", err)})
+			utils.RespondInvalidBodyJSONWithError(c, err)
 			return
 		}
 

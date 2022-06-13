@@ -13,7 +13,7 @@ func (h *handler) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &usecase.LoginRequest{}
 		if err := c.ShouldBindJSON(request); err != nil {
-			utils.RespondInvalidBodyJSON(c)
+			utils.RespondInvalidBodyJSONWithError(c, err)
 			return
 		}
 

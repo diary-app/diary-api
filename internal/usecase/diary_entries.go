@@ -44,7 +44,7 @@ type DiaryEntryBlock struct {
 // DTO
 
 type CreateDiaryEntryRequest struct {
-	DiaryID uuid.UUID       `json:"diaryId" binding:"required"`
+	DiaryID uuid.UUID       `json:"diaryId" binding:"required,uuid"`
 	Name    string          `json:"name" binding:"required"`
 	Date    common.DateOnly `json:"date" binding:"required"`
 	Value   []byte          `json:"value"`
@@ -60,7 +60,7 @@ type UpdateDiaryEntryRequest struct {
 }
 
 type DiaryEntryBlockDto struct {
-	ID    uuid.UUID `json:"id" binding:"required"`
+	ID    uuid.UUID `json:"id" binding:"required,uuid"`
 	Value []byte    `json:"value" binding:"required"`
 }
 

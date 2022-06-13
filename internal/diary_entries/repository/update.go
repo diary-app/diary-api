@@ -109,7 +109,7 @@ func validateUpdateRequest(ctx context.Context, tx db.TxOrDb, entryID uuid.UUID,
 }
 
 func updateEntry(ctx context.Context, tx db.TxOrDb, id uuid.UUID, req *usecase.UpdateDiaryEntryRequest) error {
-	if req.Name == nil && req.Date == nil && req.DiaryId == nil {
+	if req.Name == nil && req.Date == nil && req.DiaryId == nil && req.Value == nil {
 		return nil
 	}
 	const getQuery = `SELECT id, diary_id, name, date, value FROM diary_entries WHERE id = $1`

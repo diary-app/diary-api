@@ -12,7 +12,7 @@ func (h *handler) Register() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &usecase.RegisterRequest{}
 		if err := c.ShouldBindJSON(request); err != nil {
-			utils.RespondInvalidBodyJSON(c)
+			utils.RespondInvalidBodyJSONWithError(c, err)
 			return
 		}
 

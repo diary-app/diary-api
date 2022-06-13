@@ -13,7 +13,7 @@ func (h *handler) AcceptSharedDiary() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		req := &usecase.AcceptSharingTaskRequest{}
 		if err := c.ShouldBindJSON(req); err != nil {
-			utils.RespondInvalidBodyJSON(c)
+			utils.RespondInvalidBodyJSONWithError(c, err)
 			return
 		}
 
