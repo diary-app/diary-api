@@ -58,7 +58,7 @@ func NewServer(cfg *config.Config, l *log.Logger) Server {
 
 	s := &server{
 		cfg: cfg,
-		r:   initRouter(l),
+		r:   initRouter(cfg, l),
 	}
 
 	s.r.GET("/api/ping", func(c *gin.Context) {
@@ -76,12 +76,14 @@ func getSharingTasksUc(conn *sqlx.DB, clock clock.Clock) usecase.SharingTasksUse
 	return sharing_tasks.NewUseCase(stRepo)
 }
 
-func initRouter(l *log.Logger) *gin.Engine {
+func initRouter(cfg *config.Config, l *log.Logger) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
-	r.Use(middleware.RequestLoggerMiddleware(l))
-	r.Use(middleware.ResponseLoggerMiddleware(l))
+	if cfg.LogDebug {
+		r.Use(middleware.RequestLoggerMiddleware(l))
+		r.Use(middleware.ResponseLoggerMiddleware(l))
+	}
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},

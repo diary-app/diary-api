@@ -44,6 +44,9 @@ func (u *usersUseCase) GetUserByName(ctx context.Context, username string) (*use
 	if err != nil {
 		return nil, err
 	}
+	if fullUser == nil {
+		return nil, usecase.ErrUserNotFound
+	}
 
 	user := &usecase.ShortUser{
 		ID:                  fullUser.ID,
