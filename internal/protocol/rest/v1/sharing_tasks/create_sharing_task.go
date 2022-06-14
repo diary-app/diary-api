@@ -1,6 +1,7 @@
 package sharing_tasks
 
 import (
+	"diary-api/internal/auth"
 	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
@@ -13,6 +14,13 @@ func (h *handler) Create() gin.HandlerFunc {
 		req := &usecase.CreateSharingTaskRequest{}
 		if err := c.ShouldBindJSON(req); err != nil {
 			utils.RespondInvalidBodyJSONWithError(c, err)
+			return
+		}
+
+		userID := auth.MustGetUserID(c)
+		if userID == req.ReceiverUserID {
+			c.AbortWithStatusJSON(http.StatusBadRequest,
+				common.ErrorResponse{Message: "cannot share entry with yourself"})
 			return
 		}
 

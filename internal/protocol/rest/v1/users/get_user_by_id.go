@@ -1,8 +1,10 @@
 package users
 
 import (
+	"diary-api/internal/protocol/rest/common"
 	"diary-api/internal/protocol/rest/utils"
 	"diary-api/internal/usecase"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -17,7 +19,8 @@ func (h *handler) GetUserByID() gin.HandlerFunc {
 		user, err := h.uc.GetUserByID(c, id)
 		if err != nil {
 			if err == usecase.ErrUserNotFound {
-				c.AbortWithStatus(http.StatusNotFound)
+				c.AbortWithStatusJSON(http.StatusNotFound,
+					common.ErrorResponse{Message: fmt.Sprintf("user with id '%s' was not found", id)})
 			} else {
 				_ = c.AbortWithError(http.StatusInternalServerError, err)
 			}

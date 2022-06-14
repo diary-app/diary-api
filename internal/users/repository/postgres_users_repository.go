@@ -58,6 +58,9 @@ func (p *postgresUsersRepository) GetUserByID(ctx context.Context, id uuid.UUID)
 
 	user := &usecase.FullUser{}
 	if err := p.db.GetContext(ctx, user, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, usecase.ErrUserNotFound
+		}
 		return nil, err
 	}
 
